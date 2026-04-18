@@ -819,7 +819,17 @@ async function callPlaidEndpoint(functionName, options = {}) {
     const clientLatency = Math.round(performance.now() - started);
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = (json && json.error) || { code: `HTTP_${res.status}`, message: 'Request failed' };
+      // Normalise two possible error shapes:
+      //   our functions return { error: { code, message, ... } }
+      //   Netlify's edge (e.g. 503 usage_exceeded) returns { error: "code", message: "text" }
+      let err;
+      if (json && typeof json.error === 'object' && json.error !== null) {
+        err = json.error;
+      } else if (json && typeof json.error === 'string') {
+        err = { code: json.error.toUpperCase(), message: json.message || json.error };
+      } else {
+        err = { code: `HTTP_${res.status}`, message: 'Request failed' };
+      }
       STATE.apiErrors.unshift({ when: new Date().toISOString(), fn: functionName, ...err });
       STATE.apiErrors = STATE.apiErrors.slice(0, 5);
       return { ok: false, error: err, meta: null, data: null, clientLatency };
@@ -2893,11 +2903,25 @@ function initAPIPanel() {
   const link   = document.getElementById('api-plaid-link');
   if (!toggle || !panel) return;
 
+  // Lazy-fetch /item, /identity, /liabilities, /auth, /webhook the first
+  // time the user opens the dev panel. Keeps the per-page-load Netlify
+  // Functions invocation count to 2 (accounts + transactions) instead of
+  // 7, so casual visitors don't drain the monthly invocation budget.
+  let auxLoaded = false;
+  const ensureAuxLoaded = () => {
+    if (auxLoaded || STATE.useFixture) return;
+    auxLoaded = true;
+    fetchAuxiliaryEndpoints().catch((err) => console.warn('Auxiliary endpoints failed:', err));
+  };
+
   toggle.addEventListener('click', () => {
     const nowOpen = panel.classList.contains('hidden');
     panel.classList.toggle('hidden');
     toggle.setAttribute('aria-expanded', String(nowOpen));
-    if (nowOpen) renderAPIPanel();
+    if (nowOpen) {
+      ensureAuxLoaded();
+      renderAPIPanel();
+    }
   });
   if (refresh) refresh.addEventListener('click', refreshAllEndpoints);
   if (link)    link.addEventListener('click', connectWithPlaidLink);
@@ -2907,6 +2931,7 @@ function initAPIPanel() {
   if (params.get('api') === '1') {
     panel.classList.remove('hidden');
     toggle.setAttribute('aria-expanded', 'true');
+    ensureAuxLoaded();
   }
 
   renderAPIPanel();
@@ -2926,17 +2951,55 @@ async function main() {
     initAPIPanel();
     document.getElementById('loading').classList.add('hidden');
 
-    // Background: enrich the dev panel with /item, /identity, /liabilities, /auth, /webhook.
-    // These calls demonstrate additional Plaid product-surface coverage and populate
-    // the developer panel without blocking first paint.
-    if (!STATE.useFixture) {
-      fetchAuxiliaryEndpoints().catch((err) => console.warn('Auxiliary endpoints failed:', err));
-    }
+    // Note: /item, /identity, /liabilities, /auth, /webhook are not fetched
+    // here. They're lazy-loaded the first time the user opens the dev panel
+    // (see initAPIPanel + ensureAuxLoaded). Keeps the per-page-load Netlify
+    // Functions invocation count to 2 (accounts + transactions) so casual
+    // traffic doesn't drain the monthly invocation budget.
   } catch (err) {
     console.error(err);
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('error').classList.remove('hidden');
+    showLoadError(err);
   }
+}
+
+// Replaces the generic "Unable to load…" overlay with a diagnostic that
+// names the failure and offers the fixture-mode escape hatch when the
+// live Netlify Functions are unavailable (cold start, usage cap, etc.).
+function showLoadError(err) {
+  const loading = document.getElementById('loading');
+  const errorEl = document.getElementById('error');
+  if (loading) loading.classList.add('hidden');
+  if (!errorEl) return;
+
+  const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
+  const isUsageExceeded   = /usage[_ ]exceeded|HTTP_503/i.test(msg);
+  const isNetwork         = /NETWORK_ERROR/i.test(msg);
+  const fixtureUrl        = (window.location.pathname || '/') + '?fixture=1';
+
+  let title, body;
+  if (isUsageExceeded) {
+    title = 'Live Plaid API temporarily unavailable';
+    body  = 'The Netlify Functions backend has hit its monthly invocation cap. The persona-shaped sample dataset is still available offline.';
+  } else if (isNetwork) {
+    title = 'Network error reaching the backend';
+    body  = 'Could not connect to the Netlify Functions endpoint. The persona-shaped sample dataset is still available offline.';
+  } else {
+    title = 'Unable to load live Plaid data';
+    body  = 'The Netlify Functions endpoint returned an unexpected response. The persona-shaped sample dataset is still available offline.';
+  }
+
+  errorEl.innerHTML = `
+    <div class="max-w-lg text-center">
+      <div class="text-[var(--text)] text-sm font-medium">${title}</div>
+      <div class="mt-2 text-xs text-[var(--text-mute)] leading-relaxed">${body}</div>
+      <div class="mt-1 text-[10px] text-[var(--text-dim)] font-mono break-all">${msg}</div>
+      <div class="mt-5 flex items-center justify-center gap-3">
+        <a href="${fixtureUrl}" class="inline-block border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 transition rounded-sm text-xs px-4 py-2">View sample data (offline)</a>
+        <button onclick="window.location.reload()" class="inline-block border hairline-strong text-[var(--text-mute)] hover:text-[var(--text)] transition rounded-sm text-xs px-4 py-2">Retry live</button>
+      </div>
+    </div>
+  `;
+  errorEl.classList.remove('hidden');
 }
 // Wait for DOMContentLoaded so deferred CDN scripts (Chart.js, d3-array,
 // d3-geo, topojson-client) are guaranteed to have loaded before main()
