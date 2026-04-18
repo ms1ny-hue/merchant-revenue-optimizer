@@ -165,7 +165,7 @@
   }
   .tab-btn.active { color: var(--text); }
   .tab-btn.active::after { transform: scaleX(1); }
-  .tab-btn:not(.active):hover { color: #dbe5f8; }
+  .tab-btn:not(.active):hover { color: var(--text); }
   .tab-hero { position: relative; }
   .tab-hero.active::before { content: "HERO"; position: absolute; top: 4px; right: 4px; font-size: 8px; color: var(--accent); letter-spacing: 0.16em; }
 
@@ -385,22 +385,46 @@
       <a href="#" class="shrink-0" aria-label="Relationship Economics Optimizer home">
         <svg viewBox="0 0 40 40" class="h-9 w-9" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
+            <!-- Main accent gradient: emerald -> cyan -> cobalt (palette preserved; mid stop tuned to 45% for more emerald weight) -->
             <linearGradient id="mro-mark-grad" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0%" stop-color="#10b981"/>
-              <stop offset="55%" stop-color="#22d3ee"/>
+              <stop offset="0%"   stop-color="#10b981"/>
+              <stop offset="45%"  stop-color="#22d3ee"/>
               <stop offset="100%" stop-color="#3b82f6"/>
             </linearGradient>
-            <linearGradient id="mro-mark-navy" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#2b4670"/>
-              <stop offset="100%" stop-color="#13203a"/>
+            <!-- Container depth gradient: slate, modern and restrained -->
+            <linearGradient id="mro-mark-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stop-color="#1e293b"/>
+              <stop offset="100%" stop-color="#0b1220"/>
             </linearGradient>
+            <!-- Translucent bar gradient: dim-to-bright vertical for bottom-to-top fade -->
+            <linearGradient id="mro-mark-bar" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%"   stop-color="#e2e8f0" stop-opacity="0.20"/>
+              <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.75"/>
+            </linearGradient>
+            <!-- Soft glow for the rising-line endpoint -->
+            <filter id="mro-mark-glow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="1.1"/>
+            </filter>
           </defs>
-          <rect x="0.5" y="0.5" width="39" height="39" rx="8" ry="8" fill="url(#mro-mark-navy)" stroke="#5b79ac" stroke-width="1"/>
-          <rect x="8"    y="22" width="5" height="10" rx="1.2" fill="#f3f7ff" fill-opacity="0.30"/>
-          <rect x="17.5" y="16" width="5" height="16" rx="1.2" fill="#f3f7ff" fill-opacity="0.55"/>
-          <rect x="27"   y="9"  width="5" height="23" rx="1.2" fill="url(#mro-mark-grad)"/>
-          <path d="M10.5 21.5 Q15 13 20 16 Q25 19 29.5 9.5" stroke="url(#mro-mark-grad)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.85"/>
-          <circle cx="29.5" cy="9" r="1.9" fill="#10b981"/>
+          <!-- Container frame: softer 10px radius, hairline white stroke -->
+          <rect x="0.5" y="0.5" width="39" height="39" rx="10" ry="10" fill="url(#mro-mark-bg)" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+          <!-- Inner glass highlight -->
+          <rect x="1.5" y="1.5" width="37" height="37" rx="9" ry="9" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+          <!-- Ascending bars: finer 1.8 radius, vertical tint gradient -->
+          <rect x="8"    y="22" width="5" height="10" rx="1.8" fill="url(#mro-mark-bar)" fill-opacity="0.55"/>
+          <rect x="17.5" y="16" width="5" height="16" rx="1.8" fill="url(#mro-mark-bar)" fill-opacity="0.85"/>
+          <rect x="27"   y="9"  width="5" height="23" rx="1.8" fill="url(#mro-mark-grad)"/>
+          <!-- Rising trend line: single cubic Bezier, thicker stroke, rounded caps -->
+          <path d="M10.5 22 C 16 18, 23 13, 29.5 8.5"
+                stroke="url(#mro-mark-grad)"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+                opacity="0.95"/>
+          <!-- Endpoint dot: blurred halo + solid core with subtle white ring -->
+          <circle cx="29.5" cy="8.5" r="3.2" fill="#10b981" fill-opacity="0.40" filter="url(#mro-mark-glow)"/>
+          <circle cx="29.5" cy="8.5" r="1.9" fill="#10b981" stroke="rgba(255,255,255,0.9)" stroke-width="0.35"/>
         </svg>
       </a>
       <div class="min-w-0 flex items-baseline gap-3">
