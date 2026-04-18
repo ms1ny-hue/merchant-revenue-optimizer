@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Merchant Revenue Optimizer — Northstar Logistics Partners</title>
-<meta name="description" content="Payments revenue diagnostic and pricing optimizer for merchant banking relationships." />
+<title>Relationship Economics Optimizer — Northstar Logistics Partners</title>
+<meta name="description" content="Payments-led relationship economics prototype: merchant acquiring, treasury, and commercial credit rolled into a single banker P&L view, with live Plaid sandbox data." />
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -289,7 +289,7 @@
 <header class="border-b hairline backdrop-blur sticky top-0 z-40" style="background: rgba(34, 56, 91, 0.86);">
   <div class="max-w-[1600px] mx-auto px-5 md:px-7 py-3.5 flex items-center justify-between gap-4">
     <div class="flex items-center gap-3 min-w-0">
-      <a href="#" class="shrink-0" aria-label="MRO home">
+      <a href="#" class="shrink-0" aria-label="Relationship Economics Optimizer home">
         <svg viewBox="0 0 40 40" class="h-9 w-9" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="mro-mark-grad" x1="0" y1="1" x2="1" y2="0">
@@ -313,8 +313,8 @@
       <div class="min-w-0 flex items-baseline gap-3">
         <div class="flex flex-col">
           <div class="flex items-baseline gap-1.5">
-            <span class="display text-[15px] md:text-[17px] text-slate-50" style="font-variation-settings: 'opsz' 36; font-weight: 500; letter-spacing: -0.01em;">M<span style="background: linear-gradient(180deg,#10b981,#3b82f6); -webkit-background-clip:text; background-clip:text; color:transparent;">R</span>O</span>
-            <span class="eyebrow">Merchant Revenue Optimizer</span>
+            <span class="display text-[15px] md:text-[17px] text-slate-50" style="font-variation-settings: 'opsz' 36; font-weight: 500; letter-spacing: -0.01em;">R<span style="background: linear-gradient(180deg,#10b981,#3b82f6); -webkit-background-clip:text; background-clip:text; color:transparent;">E</span>O</span>
+            <span class="eyebrow">Relationship Economics Optimizer</span>
           </div>
           <div class="eyebrow text-[var(--text-dim)] mt-0.5" style="font-size: 9.5px; letter-spacing: 0.12em;">Payments-led · treasury and credit extended</div>
         </div>
@@ -394,7 +394,7 @@
       legal, banking, tax, or financial advice.
     </div>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 pt-3 border-t hairline">
-      <div>Created by Michael Stanat &nbsp;|&nbsp; © 2026 Michael Stanat &nbsp;|&nbsp; Merchant Revenue Optimizer portfolio prototype &nbsp;|&nbsp;
+      <div>Created by Michael Stanat &nbsp;|&nbsp; © 2026 Michael Stanat &nbsp;|&nbsp; Relationship Economics Optimizer portfolio prototype &nbsp;|&nbsp;
         <a href="https://github.com/ms1ny-hue/merchant-revenue-optimizer" target="_blank" rel="noopener" class="underline decoration-dotted hover:text-emerald-300">Source on GitHub</a>
       </div>
       <div class="eyebrow">Sandbox · v6</div>
@@ -458,7 +458,7 @@ const CONFIG = {
     avgInboundTicket: 3_840,
     avgOutboundPayout: 1_920,
     inboundMixCurrent:  { ACH: 0.48, Card: 0.34, Wire: 0.12, Check: 0.06 },
-    inboundMixTarget:   { ACH: 0.36, Card: 0.28, RTP: 0.26, Wire: 0.08, Check: 0.02 },
+    inboundMixTarget:   { ACH: 0.30, Card: 0.28, RTP: 0.18, PBB: 0.14, Wire: 0.08, Check: 0.02 },
     outboundMixCurrent: { 'Same-day ACH': 0.72, 'Virtual card / push-to-card': 0.18, Wire: 0.06, Factoring: 0.04 },
     outboundMixTarget:  { 'Same-day ACH': 0.48, 'Virtual card / push-to-card': 0.14, FedNow: 0.32, Wire: 0.04, Factoring: 0.02 },
     railProfile: {
@@ -513,28 +513,32 @@ const CONFIG = {
   paymentsOps: {
     totalLeakage: 176_900,
     scorecard: [
-      { metric: 'STP rate (shipper invoice-to-cash)',         current: '91.8%',  target: '95.5%',  gap: '370 bps',  annualValue: 50_500, source: 'Industry',     footnote: 'Shipper invoice-to-cash straight-through processing. Exceptions drive manual reconciliation across freight claims, detention, accessorials.' },
-      { metric: 'Auth approval rate (commercial card, CNP)',  current: '93.1%',  target: '95.0%',  gap: '190 bps',  annualValue: 33_000, source: 'Visa/MC' },
-      { metric: 'Level 3 data penetration',                   current: '14%',    target: '65%',    gap: '51 pts',   annualValue: 38_000, source: 'Visa/MC',      footnote: 'At $3,840 average shipper ticket with line-item freight detail (origin, destination, weight, class, accessorials), L3 data capture materially affects interchange qualification. Current processor does not transmit L3 fields.' },
-      { metric: 'Downgrade rate (card interchange qual.)',    current: '9.2%',   target: '4.5%',   gap: '470 bps',  annualValue: 22_500, source: 'Visa/MC' },
-      { metric: 'ACH return rate (inbound shipper debits)',   current: '0.38%',  target: '0.22%',  gap: '16 bps',   annualValue:  6_400, source: 'Nacha' },
-      { metric: 'Same-day ACH adoption across eligible carrier cohort', current: '54%', target: '85%', gap: '31 pts', annualValue: 14_500, source: 'Nacha',        footnote: '54% of carriers eligible for same-day ACH currently opt in. 72% of outbound payout volume flows through same-day ACH rails. Adoption lever vs volume share are different metrics.' },
-      { metric: 'Lockbox posting latency',                    current: '2.4 days', target: '1.1 days', gap: '1.3 days', annualValue: 8_900, source: 'Industry',  footnote: 'Inbound check and remittance float directly reduces borrowing base availability on the asset-based revolver.' },
-      { metric: 'Wire repair rate',                           current: '1.9%',   target: '0.8%',   gap: '110 bps',  annualValue:  3_100, source: 'Fed/Industry' },
+      { metric: 'STP rate (shipper invoice-to-cash)',         current: '91.8%',  target: '95.5%',  gap: '370 bps',  annualValue: 50_500, source: 'Industry',     targetBasis: '95.5% STP target reflects mid-market commercial invoice-to-cash benchmarks in 2024 industry operations surveys (illustrative).', footnote: 'Shipper invoice-to-cash straight-through processing. Exceptions drive manual reconciliation across freight claims, detention, accessorials.' },
+      { metric: 'Auth approval rate (commercial card, CNP)',  current: '93.1%',  target: '95.0%',  gap: '190 bps',  annualValue: 33_000, source: 'Visa/MC',      targetBasis: '95.0% CNP commercial auth-approval target reflects Visa CNP commercial card top-quartile 2024 (illustrative).' },
+      { metric: 'Level 3 data penetration',                   current: '14%',    target: '65%',    gap: '51 pts',   annualValue: 38_000, source: 'Visa/MC',      targetBasis: '65% L3 penetration target reflects Visa/Mastercard Level-3 qualification guidance for commercial card programs (illustrative).', footnote: 'At $3,840 average shipper ticket with line-item freight detail (origin, destination, weight, class, accessorials), L3 data capture materially affects interchange qualification. Current processor does not transmit L3 fields.' },
+      { metric: 'Downgrade rate (card interchange qual.)',    current: '9.2%',   target: '4.5%',   gap: '470 bps',  annualValue: 22_500, source: 'Visa/MC',      targetBasis: '4.5% downgrade target reflects typical interchange-optimised commercial card programs per Visa/Mastercard qualification tables (illustrative).' },
+      { metric: 'ACH return rate (inbound shipper debits)',   current: '0.38%',  target: '0.22%',  gap: '16 bps',   annualValue:  6_400, source: 'Nacha',        targetBasis: '0.22% target reflects Nacha overall unauthorized + administrative return thresholds for B2B debits (illustrative).' },
+      { metric: 'Same-day ACH adoption across eligible carrier cohort', current: '54%', target: '85%', gap: '31 pts', annualValue: 14_500, source: 'Nacha',        targetBasis: '85% adoption target reflects Nacha same-day ACH statistics for B2B payout cohorts and freight-broker carrier payouts (illustrative).', footnote: '54% of carriers eligible for same-day ACH currently opt in. 72% of outbound payout volume flows through same-day ACH rails. Adoption lever vs volume share are different metrics.' },
+      { metric: 'Lockbox posting latency',                    current: '2.4 days', target: '1.1 days', gap: '1.3 days', annualValue: 8_900, source: 'Industry',  targetBasis: '1.1 day posting-latency target reflects top-tier lockbox network SLAs per industry operations benchmarks (illustrative).', footnote: 'Inbound check and remittance float directly reduces borrowing base availability on the asset-based revolver.' },
+      { metric: 'Wire repair rate',                           current: '1.9%',   target: '0.8%',   gap: '110 bps',  annualValue:  3_100, source: 'Fed/Industry', targetBasis: '0.8% wire-repair target reflects FedWire straight-through-processing benchmarks and industry wire-ops surveys (illustrative).' },
     ],
     peerMedians: { stp: 0.962, authCNP: 0.951, l3: 0.55, sdach: 0.78 },
     cohortNote: 'Synthetic cohort: 14 freight brokers and 3PLs · $40M–$150M revenue · NAICS 541614 and 484 · benchmarks are synthetic, modeled on published Visa Performance Intelligence and Nacha operational guidance.',
   },
   pricingModels: [
     { id: 'ip',  name: 'Interchange-plus',  bps: 10, authFee: 0.08, blended: null,    monthly: 0,   recommended: true,
-      desc: 'Transparent, pass-through interchange; processor margin clearly disclosed. Wins on Level-3-eligible freight invoices.' },
+      desc: 'Transparent, pass-through interchange; processor margin clearly disclosed. Wins on Level-3-eligible freight invoices.',
+      basis: 'Interchange-plus structure typical of mid-market B2B acquiring offerings (First Data / Fiserv, Elavon, Chase Merchant Services, Global Payments). Illustrative tier.' },
     { id: 'bl',  name: 'Blended',           bps: 0,  authFee: 0,    blended: 0.0265,  monthly: 0,   recommended: false,
-      desc: 'Single all-in rate. Predictable but obscures interchange optimization upside.' },
+      desc: 'Single all-in rate. Predictable but obscures interchange optimization upside.',
+      basis: 'Blended pricing commonly offered by regional acquirers and ISO channels to simplify billing at the expense of interchange transparency. Illustrative rate.' },
     { id: 'fl',  name: 'Flat-rate',         bps: 0,  authFee: 0.30, blended: 0.029,   monthly: 0,   recommended: false,
-      desc: 'Single rate plus per-auth fee. Best for very small ticket; expensive at $3,840 avg.' },
+      desc: 'Single rate plus per-auth fee. Best for very small ticket; expensive at $3,840 avg.',
+      basis: 'Flat-rate (2.9% + $0.30) modeled on Stripe / Square / Square for Retail pricing disclosures for low-ticket retail; shown here as a comparison anchor, not a realistic fit for Northstar. Illustrative.' },
     { id: 'ent', name: 'Enterprise-tiered',  bps: 8,  authFee: 0.06, blended: null,    monthly: 0,
       rebateBps: 1.5, rebateThreshold: 20_000_000, recommended: false,
-      desc: 'Interchange-plus with volume-tier rebate above $20M annual card volume. High-volume B2B merchants where interchange-plus is already established and the competitive advantage is in volume rebate, not headline rate.' },
+      desc: 'Interchange-plus with volume-tier rebate above $20M annual card volume. High-volume B2B merchants where interchange-plus is already established and the competitive advantage is in volume rebate, not headline rate.',
+      basis: 'Volume-tier rebate structures appear in enterprise commercial acquiring RFPs (e.g. WEX, Corpay, JPM Chase Commercial Card programs). 8 bps + $0.06 and 1.5 bps rebate above $20M are illustrative anchor values, not a published tier.' },
   ],
   // Bank revenue economics
   bankRevenue: {
@@ -547,6 +551,18 @@ const CONFIG = {
     cardRebateVolume: 2_500_000,         // estimated annual corporate card spend (T&E + operations)
     cardRebateBps: 100,                  // 100 bps share on $2.5M corporate card spend → $25K / yr
     cardRebate: 25_000,
+    // RAROC / economic-profit layer. Reframes gross revenue as post-capital
+    // and post-ECL economic return, which is how a commercial banking desk
+    // actually sizes a relationship. Numbers are illustrative.
+    raroc: {
+      ablRWA:          8_000_000,       // ABL outstanding carries ~100% RWA at sub-investment-grade
+      ablECL:             20_000,       // through-the-cycle expected credit loss (~25 bps on $8M)
+      servicingCost:      85_000,       // coverage, middle-office, ops allocation
+      ftpDeposits:        0.0045,       // internal funds-transfer-pricing credit on deposits (~45 bps)
+      ftpLoans:           0.0525,       // internal FTP charge on loan assets (~525 bps)
+      capitalHurdle:      0.11,         // 11% hurdle rate on required capital
+      requiredCapital:   880_000,       // 11% × $8M ABL RWA
+    },
   },
   // Revenue capture waterfall components — reconciles to $291,460.
   //
@@ -665,6 +681,7 @@ const STATE = {
     railShift: 0.20,
     pricingTierBps: 10,
     stress: false,
+    rateShockBps: 0,   // Tab 6 live stress slider: -300 to +300 bps
   },
 };
 
@@ -1207,9 +1224,10 @@ function renderTab2() {
                 <td class="py-3 pr-4">
                   <div class="text-slate-100">${r.metric}</div>
                   ${r.footnote ? `<div class="mt-1 text-[10.5px] text-[var(--text-dim)] leading-snug italic max-w-2xl">${r.footnote}</div>` : ''}
+                  ${r.targetBasis ? `<div class="mt-1 text-[10px] text-[var(--text-dim)] leading-snug max-w-2xl"><span class="eyebrow eyebrow-sky mr-1.5" style="font-size:9px;">Target basis</span>${r.targetBasis}</div>` : ''}
                 </td>
                 <td class="py-3 pr-4 text-right num text-[var(--warn)]">${r.current}</td>
-                <td class="py-3 pr-4 text-right num text-emerald-300">${r.target}</td>
+                <td class="py-3 pr-4 text-right num text-emerald-300" title="${r.targetBasis || ''}">${r.target}</td>
                 <td class="py-3 pr-4 text-right num text-[var(--text-mute)]">${r.gap}</td>
                 <td class="py-3 pr-4 text-right num text-slate-50 font-medium">${usd(r.annualValue)}</td>
                 <td class="py-3 text-right text-[11px] text-[var(--text-dim)] uppercase tracking-wider">${r.source || ''}</td>
@@ -1471,6 +1489,7 @@ function updateTab3() {
             <div class="flex justify-between"><span class="text-[var(--text-dim)]">Net yield</span><span class="num text-slate-100">${fmtPct2.format(yieldPct)}</span></div>
           </div>
           <div class="mt-4 pt-3 border-t hairline text-[11px] text-[var(--text-mute)] leading-snug">${useCase}</div>
+          ${m.basis ? `<div class="mt-2 text-[10px] text-[var(--text-dim)] leading-snug italic"><span class="eyebrow eyebrow-sky mr-1" style="font-size:9px;">Basis</span>${m.basis}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -1819,6 +1838,59 @@ function renderTab5() {
         Year 1 partial capture of ~${usd(210_000)} reflects ramping onboarding across the four pillars (approximately 60% of Year-2 steady state).
       </div>
 
+      ${(() => {
+        const gross          = totalBankRev;                                  // Y2 steady state
+        const ecl            = br.raroc.ablECL;
+        const servicing      = br.raroc.servicingCost;
+        const capitalCharge  = Math.round(br.raroc.requiredCapital * br.raroc.capitalHurdle);
+        const netEconProfit  = gross - ecl - servicing - capitalCharge;
+        const raroc          = netEconProfit / br.raroc.requiredCapital;
+        const ftpCredit      = Math.round(deposits * br.raroc.ftpDeposits);
+        const ftpCharge      = Math.round(br.ablOutstanding * br.raroc.ftpLoans);
+        const row = (label, desk, mechanic, value, negative) => `
+          <tr class="border-b hairline">
+            <td class="py-2.5 pr-4 text-slate-100">${label}</td>
+            <td class="py-2.5 pr-4"><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">${desk}</span></td>
+            <td class="py-2.5 pr-4 text-[12px] text-[var(--text-mute)]">${mechanic}</td>
+            <td class="py-2.5 text-right num ${negative ? 'text-[var(--crit)]' : 'text-slate-50'}">${negative ? '−' : ''}${usd(value)}</td>
+          </tr>
+        `;
+        return `
+        <div class="mt-6 pt-5 border-t hairline">
+          <div class="flex items-baseline justify-between flex-wrap gap-3 mb-3">
+            <div class="eyebrow eyebrow-violet">Net economic profit after capital and ECL</div>
+            <div class="text-[11px] text-[var(--text-dim)] uppercase tracking-wider">RAROC · steady state</div>
+          </div>
+          <table class="w-full text-[13px]">
+            <thead>
+              <tr class="eyebrow text-left border-b hairline-strong">
+                <th class="pb-2.5 pr-4 font-medium">Line</th>
+                <th class="pb-2.5 pr-4 font-medium">Desk</th>
+                <th class="pb-2.5 pr-4 font-medium">Mechanic</th>
+                <th class="pb-2.5 font-medium text-right">Annual</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${row('Gross revenue (Y2 steady state)', 'All', 'Per Bank Revenue Build table above', gross, false)}
+              ${row('Expected credit loss (ECL)',      'Credit', `Through-cycle on ${usd(br.raroc.ablRWA)} ABL RWA`, ecl, true)}
+              ${row('Servicing &amp; coverage cost',    'Coverage', 'Coverage banker, middle-office, ops allocation', servicing, true)}
+              ${row('Capital charge',                  'Treasury', `${fmtPct1.format(br.raroc.capitalHurdle)} hurdle × ${usd(br.raroc.requiredCapital)} required capital`, capitalCharge, true)}
+              <tr>
+                <td colspan="3" class="pt-3 text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">Net economic profit</td>
+                <td class="pt-3 text-right num text-emerald-300 font-semibold text-lg">${usd(netEconProfit)}</td>
+              </tr>
+              <tr>
+                <td colspan="3" class="pt-1 text-[11px] text-[var(--text-dim)]">Return on required capital (RAROC)</td>
+                <td class="pt-1 text-right num text-emerald-300 text-[13px]">${fmtPct1.format(raroc)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="mt-3 text-[10.5px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
+            FTP note: internal funds-transfer-pricing credits on deposits (~<span class="num">${usd(ftpCredit)}</span> at <span class="num">${fmtPct2.format(br.raroc.ftpDeposits)}</span> on <span class="num">${usd(deposits)}</span>) and FTP charges on loan assets (~<span class="num">${usd(ftpCharge)}</span> at <span class="num">${fmtPct2.format(br.raroc.ftpLoans)}</span> on <span class="num">${usd(br.ablOutstanding)}</span>) redistribute revenue within the bank but net to zero at the consolidated level; they are disclosed for desk-level attribution rather than consolidated P&amp;L. Illustrative.
+          </div>
+        </div>`;
+      })()}
+
       <div class="mt-6 pt-5 border-t hairline">
         <div class="flex items-baseline justify-between flex-wrap gap-3 mb-3">
           <div class="eyebrow eyebrow-accent">5-year relationship value build · illustrative</div>
@@ -1978,16 +2050,34 @@ function renderTab6() {
     </div>
   `;
 
+  // Rate-shock scenario is live-modeled below; three scripted scenarios remain.
   const scenarios = [
     { id: 'vol',    label: 'Shipper volume −20%',           impact: 'Borrowing base −18% ($7.2M avail. compression)', fccrImpact: 1.28, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
       detail: 'Freight recession scenario. AR shrinks proportionally; 80% advance rate still clears minimum availability covenant with ~$3.2M headroom.' },
-    { id: 'sofr',   label: 'SOFR +200 bps',                 impact: 'Interest expense +$160K annually',               fccrImpact: 1.19, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
-      detail: 'Rate shock on $8M ABL outstanding. FCCR compresses to 1.19× (above 1.15× covenant). Re-price trigger activates at +250 bps.' },
     { id: 'carrier',label: 'Carrier rate pressure +15%',    impact: 'Gross margin −240 bps · DSCR to 1.31×',         fccrImpact: 1.31, verdict: 'Holds under base assumptions',   verdictColor: 'ok',
       detail: 'Carrier capacity cost pass-through usually lags shipper rate adjustments 45–60 days. Short-term margin compression; recovers inside one quarter.' },
     { id: 'shipper',label: 'Top-10 shipper loss (−20% rev.)', impact: 'HHI +420 points · availability −$1.8M · FCCR 1.22×', fccrImpact: 1.22, verdict: 'Would trigger repricing under base assumptions', verdictColor: 'warn',
       detail: 'Concentration shock. AR aging worsens as replacement shippers onboard. Pricing re-opener clause triggered; 10–15 bps spread widening.' },
   ];
+
+  // Rate-shock live-model constants. Calibrated so that at shock=0 the FCCR
+  // is 1.42× (base case) and at shock=+200 bps it compresses to ~1.19×,
+  // matching the prior scripted SOFR+200 card. See rateShockOutputs().
+  const RATE_SHOCK = {
+    baseAllIn: 0.0805,          // SOFR + 375 bps stated ~ 8.05% all-in
+    coverageNumerator: 1_180_000,
+    otherFixedCharges: 185_000,
+    covenantMin: 1.15,
+    repriceTriggerBps: 250,
+  };
+  function rateShockOutputs(bps) {
+    const allIn = RATE_SHOCK.baseAllIn + bps / 10_000;
+    const interest = CONFIG.bankRevenue.ablOutstanding * allIn;
+    const fccr = RATE_SHOCK.coverageNumerator / (interest + RATE_SHOCK.otherFixedCharges);
+    const covenantTrip = fccr < RATE_SHOCK.covenantMin;
+    const repriceTrigger = bps >= RATE_SHOCK.repriceTriggerBps;
+    return { allIn, interest, fccr, covenantTrip, repriceTrigger };
+  }
 
   el.innerHTML = `
     ${tabHeading('Relationship · supporting', 'Relationship context & solvency stress', 6)}
@@ -2087,10 +2177,64 @@ function renderTab6() {
       <div class="mb-4">
         <div class="eyebrow eyebrow-amber">D · Solvency stress test</div>
         <p class="mt-2 text-[12.5px] text-[var(--text-mute)] leading-relaxed max-w-4xl">
-          Scenario outcomes below are deterministic model outputs on illustrative assumptions, not underwriting conclusions. A production credit review would run these against a live financial statement set and stochastic inputs.
+          Scenario outcomes below are deterministic model outputs on illustrative assumptions, not underwriting conclusions. A production credit review would run these against a live financial statement set and stochastic inputs. The rate-shock card below is live-modeled; the three scripted cards are fixed illustrative scenarios.
         </p>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Live-modeled rate-shock card -->
+      ${(() => {
+        const o = rateShockOutputs(STATE.sim.rateShockBps);
+        return `
+        <div class="border rounded-lg p-5 mb-5" style="border-color: var(--violet); background: linear-gradient(180deg, rgba(167,139,250,0.08), transparent 70%);">
+          <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
+            <div>
+              <div class="eyebrow eyebrow-violet">Live-modeled · Rate shock</div>
+              <div class="mt-1 text-[13px] text-slate-100 font-medium">Drag to recompute all-in borrowing cost, annual interest, and FCCR</div>
+            </div>
+            <span id="rate-shock-verdict" class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm border">—</span>
+          </div>
+
+          <div class="mt-3">
+            <div class="flex items-baseline justify-between mb-1">
+              <label for="sim6-rateShock" class="eyebrow">Rate shock (bps)</label>
+              <span id="sim6-rateShock-val" class="num text-lg text-emerald-300 font-light leading-none">${STATE.sim.rateShockBps} bps</span>
+            </div>
+            <input id="sim6-rateShock" type="range" min="-300" max="300" step="25" value="${STATE.sim.rateShockBps}" class="w-full"/>
+            <div class="mt-1.5 flex justify-between text-[10px] text-[var(--text-dim)] num">
+              <span>−300 bps</span><span>0</span><span>+300 bps</span>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="border hairline rounded-sm px-3 py-2">
+              <div class="eyebrow">New all-in rate</div>
+              <div class="mt-1 num text-[17px] text-slate-50 font-light" id="rs-all-in">${fmtPct2.format(o.allIn)}</div>
+            </div>
+            <div class="border hairline rounded-sm px-3 py-2">
+              <div class="eyebrow">Annual interest on ABL</div>
+              <div class="mt-1 num text-[17px] text-slate-50 font-light" id="rs-interest">${usd(o.interest)}</div>
+              <div class="text-[10px] text-[var(--text-dim)] mt-0.5">on <span class="num">${usd(CONFIG.bankRevenue.ablOutstanding)}</span></div>
+            </div>
+            <div class="border hairline rounded-sm px-3 py-2">
+              <div class="eyebrow">Stressed FCCR</div>
+              <div class="mt-1 num text-[17px] font-light" id="rs-fccr">${fmtNum2.format(o.fccr)}×</div>
+              <div class="text-[10px] text-[var(--text-dim)] mt-0.5">vs ≥ 1.15×</div>
+            </div>
+            <div class="border hairline rounded-sm px-3 py-2">
+              <div class="eyebrow">Covenant trip</div>
+              <div class="mt-1 num text-[17px] font-light" id="rs-trip">${o.covenantTrip ? '<span class="text-[var(--crit)]">Yes</span>' : '<span class="text-emerald-300">No</span>'}</div>
+              <div class="text-[10px] text-[var(--text-dim)] mt-0.5" id="rs-reprice">Re-price trigger at +250 bps</div>
+            </div>
+          </div>
+          <div class="mt-3 text-[10.5px] text-[var(--text-dim)] leading-snug max-w-4xl">
+            Calibration: base all-in <span class="num">${fmtPct2.format(RATE_SHOCK.baseAllIn)}</span> (SOFR + 375). Coverage numerator and other fixed charges calibrated so base FCCR = 1.42× and +200 bps shock ≈ 1.19×, consistent with the scripted scenario this replaces. Illustrative.
+          </div>
+        </div>`;
+      })()}
+
+      <!-- Three scripted scenarios -->
+      <div class="eyebrow eyebrow-amber mb-2">Scripted scenarios (illustrative)</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         ${scenarios.map((sc) => `
           <div class="border hairline rounded-lg p-4">
             <div class="flex items-start justify-between">
@@ -2111,7 +2255,7 @@ function renderTab6() {
       <div class="mt-5 pt-4 border-t hairline text-[12px] text-[var(--text-mute)] leading-relaxed max-w-5xl">
         <span class="eyebrow mr-1.5">Why stress test pricing</span>
         Merchant services pricing commitments extend 3–5 years. Freight is cyclical. Stress testing the merchant
-        is due diligence, not risk theater. A 3PL that clears these four scenarios earns our sharpest pricing.
+        is due diligence, not risk theater. A 3PL that clears these scenarios earns our sharpest pricing.
       </div>
     </div>
 
@@ -2126,6 +2270,48 @@ function renderTab6() {
       </ol>
     </div>
   `;
+
+  // --- Wire the live-modeled rate-shock slider. ---
+  const rsSlider = el.querySelector('#sim6-rateShock');
+  if (rsSlider) {
+    const rsVal     = el.querySelector('#sim6-rateShock-val');
+    const rsAllIn   = el.querySelector('#rs-all-in');
+    const rsInt     = el.querySelector('#rs-interest');
+    const rsFCCR    = el.querySelector('#rs-fccr');
+    const rsTrip    = el.querySelector('#rs-trip');
+    const rsReprice = el.querySelector('#rs-reprice');
+    const rsVerdict = el.querySelector('#rate-shock-verdict');
+
+    const paintVerdict = (out, bps) => {
+      if (!rsVerdict) return;
+      let text, cls;
+      if (out.covenantTrip)          { text = 'Would fail base assumptions';             cls = 'text-rose-300 border-rose-500/50 bg-rose-500/10'; }
+      else if (out.repriceTrigger)   { text = 'Would trigger repricing under base assumptions'; cls = 'text-amber-300 border-amber-500/50 bg-amber-500/10'; }
+      else if (bps >= 100)           { text = 'Tightens under base assumptions';         cls = 'text-amber-300 border-amber-500/50 bg-amber-500/10'; }
+      else                           { text = 'Holds under base assumptions';            cls = 'text-emerald-300 border-emerald-500/50 bg-emerald-500/10'; }
+      rsVerdict.className = 'text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm border ' + cls;
+      rsVerdict.textContent = text;
+    };
+
+    const repaint = () => {
+      const bps = parseFloat(rsSlider.value);
+      STATE.sim.rateShockBps = bps;
+      const out = rateShockOutputs(bps);
+      if (rsVal)   rsVal.textContent   = `${bps >= 0 ? '+' : ''}${bps} bps`;
+      if (rsAllIn) rsAllIn.textContent = fmtPct2.format(out.allIn);
+      if (rsInt)   rsInt.textContent   = usd(out.interest);
+      if (rsFCCR) {
+        rsFCCR.textContent = `${fmtNum2.format(out.fccr)}×`;
+        rsFCCR.className   = `mt-1 num text-[17px] font-light ${out.fccr >= RATE_SHOCK.covenantMin ? 'text-emerald-300' : 'text-[var(--crit)]'}`;
+      }
+      if (rsTrip) rsTrip.innerHTML = out.covenantTrip ? '<span class="text-[var(--crit)]">Yes</span>' : '<span class="text-emerald-300">No</span>';
+      if (rsReprice) rsReprice.textContent = out.repriceTrigger ? 'Re-price trigger activated (shock ≥ +250 bps)' : 'Re-price trigger at +250 bps';
+      paintVerdict(out, bps);
+    };
+
+    rsSlider.addEventListener('input', repaint);
+    repaint();
+  }
 }
 /* -------- Tab 7 — Merchant Pricing Proposal (printable) -------- */
 function renderTab7() {
@@ -2285,7 +2471,7 @@ function renderTab7() {
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Treasury · Deposit NII</td><td class="py-2.5 text-slate-600">175 bps blended on ${usd(deposits)} combined balances</td><td class="py-2.5 text-right num text-slate-900">${usd(depositNII)}</td></tr>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Credit · ABL revolver interest</td><td class="py-2.5 text-slate-600">SOFR + 375 stated · 175 bps net margin on ${usd(br.ablOutstanding)}</td><td class="py-2.5 text-right num text-slate-900">${usd(ablInterest)}</td></tr>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Interchange share</td><td class="py-2.5 text-slate-600">20 bps share on $23.1M shipper card volume</td><td class="py-2.5 text-right num text-slate-900">${usd(interchangeShare)}</td></tr>
-            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Commercial card rebate program</td><td class="py-2.5 text-slate-600">10 bps share on estimated ~$2.5M annual corporate card spend (T&amp;E + operations)</td><td class="py-2.5 text-right num text-slate-900">${usd(cardRebate)}</td></tr>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Commercial card rebate program</td><td class="py-2.5 text-slate-600">100 bps share on estimated ~$2.5M annual corporate card spend (T&amp;E + operations)</td><td class="py-2.5 text-right num text-slate-900">${usd(cardRebate)}</td></tr>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Treasury · Fee income</td><td class="py-2.5 text-slate-600">ZBA, positive pay, lockbox, controlled disbursement, ACH origination, FX</td><td class="py-2.5 text-right num text-slate-900">${usd(treasuryFee)}</td></tr>
             <tr><td colspan="2" class="pt-3.5 font-semibold text-slate-900 uppercase tracking-[0.06em] text-[11px]">Bank revenue to relationship (illustrative)</td><td class="pt-3.5 text-right text-[15px] print-accent font-medium" style="font-family: 'Fraunces', Georgia, serif;">$210K Year 1 ramping to ~$350K Year 2 steady state</td></tr>
           </tbody>
@@ -2337,13 +2523,15 @@ function renderTab7() {
         <!-- 11. Pre-onboarding -->
         <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3 print-avoid-break">Pre-onboarding checks</h2>
         <div class="text-[12.5px] text-slate-700 font-sans grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5">
-          <div>· OFAC + SDN screening</div>
-          <div>· Beneficial ownership (FinCEN CDD)</div>
-          <div>· FMCSA broker authority and BMC-84 surety bond verification</div>
-          <div>· Cargo &amp; contingent insurance review</div>
-          <div>· Concentration risk review</div>
-          <div>· KYC refresh · BSA/AML disposition</div>
-          <div>· Sanctions screening on principals</div>
+          <div>· CIP and KYC refresh (31 CFR 1020)</div>
+          <div>· OFAC sanctions screening</div>
+          <div>· Beneficial ownership verification (FinCEN CTA, 25% threshold)</div>
+          <div>· Dun &amp; Bradstreet business credit pull</div>
+          <div>· Experian or Equifax commercial bureau pull</div>
+          <div>· FMCSA broker authority verification (active MC number)</div>
+          <div>· BMC-84 surety bond verification ($75,000 minimum)</div>
+          <div>· Secretary of State good standing (Illinois)</div>
+          <div>· Evidence of E&amp;O and cargo insurance</div>
         </div>
 
         <!-- Footer disclosure -->
@@ -2367,17 +2555,17 @@ function buildTab6Charts() {}
  * ================================================================== */
 const COPILOT_QA = [
   { q: "Why is our STP rate below benchmark?",
-    a: "Current STP rate of 91.8% trails the 95.5% top-tier benchmark by 370 bps. Primary drivers are exception-handling on freight claims, detention, and accessorials — invoices that don't auto-match against the carrier-confirmed POD or rate confirmation drop into manual reconciliation. Closing the gap captures roughly $50,500 annually at current $68M inbound volume." },
+    a: "Illustrative point estimate: Current STP rate of 91.8% trails the 95.5% top-tier benchmark by 370 bps. Primary drivers are exception-handling on freight claims, detention, and accessorials — invoices that don't auto-match against the carrier-confirmed POD or rate confirmation drop into manual reconciliation. Closing the gap captures roughly $50,500 annually at current $68M inbound volume. (Deterministic scenario, not modeled.)" },
   { q: "What's the payback on migrating 40% of shipper volume to RTP?",
-    a: "At 40% RTP migration on the $32.6M ACH-routed inbound slice, settlement velocity compresses from 1–3 days to instant. Operational lift (DSO compression, reduced exception cost, reduced lockbox latency) is roughly $34,000 annualized. Against a $38,000 one-time migration cost, payback is approximately 13 months. RTP rails are ISO 20022-native; counterparty bank participation is the gating constraint." },
+    a: "Illustrative point estimate: At 40% RTP migration on the $32.6M ACH-routed inbound slice, settlement velocity compresses from 1–3 days to instant. Operational lift (DSO compression, reduced exception cost, reduced lockbox latency) is roughly $34,000 annualized. Against a $125,000 one-time migration cost, payback is approximately 3.7 years. RTP rails are ISO 20022-native; counterparty bank participation is the gating constraint. (Deterministic scenario, not modeled.)" },
   { q: "How does pricing change if auth rate improves 200 bps?",
-    a: "CNP auth approval currently runs 93.1%. A 200 bps lift to ~95.1% recovers ~$36,000 of previously declined revenue at $23.1M card-addressable volume. That lift is structurally tied to network tokenization coverage and issuer routing optimization. Pricing posture can tighten by ~5 bps on blended take-rate without sacrificing margin." },
+    a: "Illustrative point estimate: CNP auth approval currently runs 93.1%. A 200 bps lift to ~95.1% recovers ~$36,000 of previously declined revenue at $23.1M card-addressable volume. That lift is structurally tied to network tokenization coverage and issuer routing optimization. Pricing posture can tighten by ~5 bps on blended take-rate without sacrificing margin. (Deterministic scenario, not modeled.)" },
   { q: "What's the biggest revenue leak in this portfolio?",
-    a: "The single largest leak is STP rate at $50,500 annually (370 bps gap). Level 3 data penetration is second at $38,000, followed by Auth approval (CNP) at $33,000. Aggregated across all eight operational metrics, total annual leakage is $176,900. Prioritizing STP and L3 capture recovers roughly half of the gap in the first quarter of implementation." },
+    a: "Illustrative point estimate: The single largest leak is STP rate at $50,500 annually (370 bps gap). Level 3 data penetration is second at $38,000, followed by Auth approval (CNP) at $33,000. Aggregated across all eight operational metrics, total annual leakage is $176,900. Prioritizing STP and L3 capture recovers roughly half of the gap in the first quarter of implementation. (Deterministic scenario, not modeled.)" },
   { q: "How does the revolver stress test at SOFR +200?",
-    a: "On the $8M asset-based revolver outstanding at SOFR + 375 (currently ~8.05% all-in), a +200 bps SOFR shock pushes the rate to ~10.05%. Annual interest expense rises from ~$644K to ~$804K — a ~$160K increase. Fixed-charge coverage compresses but stays inside the 1.15× covenant under base-case EBITDA. Verdict: Tightens under base assumptions, with re-pricing trigger at +250 bps." },
+    a: "Illustrative point estimate: On the $8M asset-based revolver outstanding at SOFR + 375 (currently ~8.05% all-in), a +200 bps SOFR shock pushes the rate to ~10.05%. Annual interest expense rises from ~$644K to ~$804K — a ~$160K increase. Fixed-charge coverage compresses but stays inside the 1.15× covenant under base-case EBITDA. Verdict: Tightens under base assumptions, with re-pricing trigger at +250 bps. Try the live Tab 6 rate-shock slider for interactive recompute. (Deterministic scenario, not modeled.)" },
   { q: "What's our estimated wallet share vs addressable opportunity?",
-    a: "Indicative current wallet share at the incumbent mid-tier bank is ~28% of Northstar's payments + treasury + credit spend. The integrated proposal models a wallet share opportunity of ~78% (illustrative) across the ABL revolver participation, treasury management, and merchant acceptance. Year 1 is a ramping year (~$210K) as treasury, credit, and card acceptance onboard across months 2–7; Year 2 reaches steady state at ~$350K. See the Tab 5 multi-year build table for the full Y1–Y5 trajectory (5-year cumulative ~$1.92M, illustrative)." },
+    a: "Illustrative point estimate: Indicative current wallet share at the incumbent mid-tier bank is ~28% of Northstar's payments + treasury + credit spend. The integrated proposal models a wallet share opportunity of ~78% across the ABL revolver participation, treasury management, and merchant acceptance. Year 1 is a ramping year (~$210K) as treasury, credit, and card acceptance onboard across months 2–7; Year 2 reaches steady state at ~$350K. See the Tab 5 multi-year build table for the full Y1–Y5 trajectory (5-year cumulative ~$1.92M). (Deterministic scenario, not modeled.)" },
 ];
 
 function initCopilot() {

@@ -13,8 +13,8 @@ exports.handler = async () => {
   try {
     const client = getPlaidClient();
     const resp = await client.linkTokenCreate({
-      user: { client_user_id: 'mro-demo-user' },
-      client_name: 'Merchant Revenue Optimizer',
+      user: { client_user_id: 'reo-demo-user' },
+      client_name: 'Relationship Economics Optimizer',
       products: [Products.Auth, Products.Transactions, Products.Identity, Products.Liabilities],
       country_codes: [CountryCode.Us],
       language: 'en',
