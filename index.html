@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Relationship Economics Optimizer — Northstar Logistics Partners</title>
 <meta name="description" content="Payments-led relationship economics prototype: merchant acquiring, treasury, and commercial credit rolled into a single banker P&L view, with live Plaid sandbox data." />
-<meta name="theme-color" content="#22385b">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#e6eff8">
+<meta name="color-scheme" content="light">
 <link rel="canonical" href="https://merchant-revenue-optimizer.netlify.app/">
 
 <!-- Open Graph / Twitter -->
@@ -71,29 +71,35 @@
 
 <style>
   :root {
-    color-scheme: dark;
-    --bg: #22385b;
-    --bg-elev: #2b4670;
-    --bg-elev-2: #35558a;
-    --line: #4a6798;
-    --line-strong: #5b79ac;
-    --text: #f3f7ff;
-    --text-mute: #c8d4ec;
-    --text-dim: #94a8c9;
+    color-scheme: light;
+    /* Light blue theme. Hierarchy goes from --bg (page) up to --bg-elev-2
+       (top elevation, near-white) so cards remain visually raised against
+       the page tint. */
+    --bg: #e6eff8;
+    --bg-elev: #f1f6fb;
+    --bg-elev-2: #ffffff;
+    --line: #cbd5e1;
+    --line-strong: #94a3b8;
+    --text: #0f172a;
+    --text-mute: #334155;
+    --text-dim: #64748b;
     --accent: #10b981;
     --accent-soft: #34d399;
     --sky: #38bdf8;
     --violet: #a78bfa;
     --cobalt: #3b82f6;
-    --warn: #fbbf24;
-    --crit: #fb7185;
+    /* Warn / crit darkened for legibility on a light surface. */
+    --warn: #b45309;
+    --crit: #be123c;
   }
   html, body {
     background: var(--bg);
+    /* Halved opacities so the brand glow reads as a tint on the light
+       canvas instead of a muddy overlay. */
     background-image:
-      radial-gradient(1400px 700px at 12% -8%, rgba(16, 185, 129, 0.07), transparent 55%),
-      radial-gradient(1100px 650px at 95% 2%, rgba(59, 130, 246, 0.085), transparent 55%),
-      radial-gradient(1300px 900px at 60% 115%, rgba(167, 139, 250, 0.06), transparent 60%);
+      radial-gradient(1400px 700px at 12% -8%, rgba(16, 185, 129, 0.035), transparent 60%),
+      radial-gradient(1100px 650px at 95% 2%, rgba(59, 130, 246, 0.04), transparent 60%),
+      radial-gradient(1300px 900px at 60% 115%, rgba(167, 139, 250, 0.03), transparent 65%);
     background-attachment: fixed;
   }
   body {
@@ -292,12 +298,29 @@
   .api-btn-secondary:hover { color: var(--text); border-color: var(--accent); background: rgba(16,185,129,0.06); }
   #api-panel.hidden ~ * #api-toggle-caret { transform: rotate(0deg); }
 
+  /* Light-theme overrides for the Tailwind utility classes used most
+     often inside the JS template strings. The templates were authored
+     against the dark palette (text-slate-50 / 100 / 200 = near-white;
+     text-emerald-300 / amber-300 / rose-300 = pale accents that read
+     fine on dark navy but disappear or wash out on light surfaces).
+     Override here rather than rewriting hundreds of inline classnames.
+     The utilities still in use that already make sense on light
+     (text-slate-700 / 900, text-emerald-700, etc.) are left untouched. */
+  .text-slate-50  { color: #0f172a !important; }
+  .text-slate-100 { color: #1e293b !important; }
+  .text-slate-200 { color: #334155 !important; }
+  .text-emerald-300 { color: #047857 !important; }
+  .text-emerald-400 { color: #047857 !important; }
+  .text-amber-300   { color: #b45309 !important; }
+  .text-rose-300    { color: #be123c !important; }
+  .text-sky-400     { color: #0369a1 !important; }
+
   /* Print CSS for Tab 7 */
   @media print {
     @page {
       size: letter;
       margin: 0.75in 0.7in 0.95in 0.7in;
-      @top-right { content: "Confidential"; font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; }
+      @top-right { content: "Illustrative"; font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; }
       @top-left  { content: "Northstar Logistics Partners, LLC"; font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; font-weight: 500; letter-spacing: 0.02em; color: #475569; }
       @bottom-center { content: "Merchant Pricing Proposal  ·  Page " counter(page) " of " counter(pages); font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; letter-spacing: 0.04em; color: #64748b; }
       @bottom-right  { content: "Prototype · Not a real financial product"; font-family: "IBM Plex Sans", sans-serif; font-size: 7pt; color: #94a3b8; }
@@ -341,10 +364,10 @@
   }
 </style>
 </head>
-<body class="bg-slate-900 text-slate-50 min-h-screen font-sans antialiased">
+<body class="min-h-screen font-sans antialiased">
 
 <!-- Header -->
-<header class="border-b hairline backdrop-blur sticky top-0 z-40" style="background: rgba(34, 56, 91, 0.86);">
+<header class="border-b hairline backdrop-blur sticky top-0 z-40" style="background: rgba(248, 251, 253, 0.86);">
   <div class="max-w-[1600px] mx-auto px-5 md:px-7 py-3.5 flex items-center justify-between gap-4">
     <div class="flex items-center gap-3 min-w-0">
       <a href="#" class="shrink-0" aria-label="Relationship Economics Optimizer home">
@@ -428,7 +451,7 @@
     <div class="mt-3 text-sm text-[var(--text-mute)]">Loading sandbox data…</div>
   </div>
 </div>
-<div id="error" class="hidden fixed inset-0 grid place-items-center z-50 p-6" style="background: rgba(34, 56, 91, 0.98);">
+<div id="error" class="hidden fixed inset-0 grid place-items-center z-50 p-6" style="background: rgba(248, 251, 253, 0.98);">
   <div class="max-w-md text-center">
     <div class="text-[var(--text)] text-sm font-medium">Unable to load the demonstration dataset.</div>
     <div class="mt-2 text-xs text-[var(--text-mute)]">Please refresh the page. If the issue persists, try again in a moment.</div>
@@ -770,17 +793,19 @@ async function loadUSGeo() {
 }
 
 function initChartDefaults() {
-  Chart.defaults.color = '#c8d4ec';
-  Chart.defaults.borderColor = '#4a6798';
+  // Chart axis labels and grid lines tuned for light background.
+  // Tooltips intentionally kept dark — high-contrast on either theme.
+  Chart.defaults.color = '#475569';
+  Chart.defaults.borderColor = '#cbd5e1';
   Chart.defaults.font.family = '"IBM Plex Sans", system-ui, sans-serif';
   Chart.defaults.font.size = 11;
   Chart.defaults.plugins.legend.labels.boxWidth = 8;
   Chart.defaults.plugins.legend.labels.boxHeight = 8;
-  Chart.defaults.plugins.tooltip.backgroundColor = '#2b4670';
-  Chart.defaults.plugins.tooltip.borderColor = '#5b79ac';
+  Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
+  Chart.defaults.plugins.tooltip.borderColor = '#475569';
   Chart.defaults.plugins.tooltip.borderWidth = 1;
-  Chart.defaults.plugins.tooltip.titleColor = '#f3f7ff';
-  Chart.defaults.plugins.tooltip.bodyColor = '#c8d4ec';
+  Chart.defaults.plugins.tooltip.titleColor = '#f8fafc';
+  Chart.defaults.plugins.tooltip.bodyColor = '#e2e8f0';
   Chart.defaults.plugins.tooltip.padding = 10;
   Chart.defaults.plugins.tooltip.displayColors = false;
   Chart.defaults.plugins.tooltip.bodyFont = { family: '"IBM Plex Mono"', size: 11 };
@@ -1012,7 +1037,7 @@ function renderTab1() {
         <div class="display text-5xl text-slate-50 num font-light leading-none">${CONFIG.scoring.indicativeScore}</div>
         <div>
           <div class="eyebrow">Indicative tier</div>
-          <div class="text-[13px] text-slate-100 font-medium">${CONFIG.scoring.indicativeGrade} (illustrative) · ${CONFIG.scoring.confidence} confidence</div>
+          <div class="text-[13px] text-slate-100 font-medium">${CONFIG.scoring.indicativeGrade} · illustrative</div>
         </div>
       </div>
       <div class="hidden md:block h-10 w-px bg-[var(--line-strong)]"></div>
@@ -2466,7 +2491,7 @@ function renderTab7() {
           <div>
             <div class="text-[40px] leading-none num font-normal text-slate-900" style="font-family: 'Fraunces', Georgia, serif;">${CONFIG.scoring.indicativeScore}</div>
             <div class="text-[11px] uppercase tracking-widest text-emerald-700 mt-1 font-sans font-semibold">Indicative tier</div>
-            <div class="text-[12px] text-slate-700 font-sans">${CONFIG.scoring.indicativeGrade} (illustrative) · ${CONFIG.scoring.confidence} confidence</div>
+            <div class="text-[12px] text-slate-700 font-sans">${CONFIG.scoring.indicativeGrade} · illustrative</div>
           </div>
           <div>
             ${renderScoringRubric('print')}
