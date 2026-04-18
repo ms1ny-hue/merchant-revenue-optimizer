@@ -1,0 +1,16 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[dev]
+  command = "python3 -m http.server 8765"
+  port = 8888
+  targetPort = 8765
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "public, max-age=0, must-revalidate"

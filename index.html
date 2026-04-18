@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Merchant Revenue Optimizer — Northstar Logistics Partners</title>
+<meta name="description" content="Payments revenue diagnostic and pricing optimizer for merchant banking relationships." />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+          serif: ['"Fraunces"', '"Source Serif Pro"', 'Georgia', 'serif'],
+          mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/d3-array@3"></script>
+<script src="https://unpkg.com/d3-geo@3"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #22385b;
+    --bg-elev: #2b4670;
+    --bg-elev-2: #35558a;
+    --line: #4a6798;
+    --line-strong: #5b79ac;
+    --text: #f3f7ff;
+    --text-mute: #c8d4ec;
+    --text-dim: #94a8c9;
+    --accent: #10b981;
+    --accent-soft: #34d399;
+    --sky: #38bdf8;
+    --violet: #a78bfa;
+    --cobalt: #3b82f6;
+    --warn: #fbbf24;
+    --crit: #fb7185;
+  }
+  html, body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(1400px 700px at 12% -8%, rgba(16, 185, 129, 0.07), transparent 55%),
+      radial-gradient(1100px 650px at 95% 2%, rgba(59, 130, 246, 0.085), transparent 55%),
+      radial-gradient(1300px 900px at 60% 115%, rgba(167, 139, 250, 0.06), transparent 60%);
+    background-attachment: fixed;
+  }
+  body {
+    color: var(--text);
+    font-feature-settings: "ss01","ss02","cv05","cv11";
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "zero";
+    letter-spacing: -0.01em;
+    font-weight: 400;
+  }
+  .display {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 400;
+    font-optical-sizing: auto;
+    font-variation-settings: "opsz" 120, "SOFT" 20;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  h1, h2 { font-family: "Fraunces", Georgia, serif; font-variation-settings: "opsz" 48, "SOFT" 30; font-weight: 400; letter-spacing: -0.015em; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+  }
+  .eyebrow-accent { color: var(--accent); }
+  .eyebrow-sky { color: var(--sky); }
+  .eyebrow-violet { color: var(--violet); }
+  .eyebrow-amber { color: var(--warn); }
+
+  .hairline { border-color: var(--line); }
+  .hairline-strong { border-color: var(--line-strong); }
+
+  .tab-btn {
+    position: relative;
+    color: var(--text-mute);
+    transition: color 140ms ease;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-weight: 400;
+  }
+  .tab-btn::after {
+    content: "";
+    position: absolute;
+    left: 12%; right: 12%; bottom: -1px;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 180ms cubic-bezier(.2,.8,.2,1);
+  }
+  .tab-btn.active { color: var(--text); }
+  .tab-btn.active::after { transform: scaleX(1); }
+  .tab-btn:not(.active):hover { color: #dbe5f8; }
+  .tab-hero { position: relative; }
+  .tab-hero.active::before { content: "HERO"; position: absolute; top: 4px; right: 4px; font-size: 8px; color: var(--accent); letter-spacing: 0.16em; }
+
+  .kpi-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0));
+    transition: border-color 140ms ease;
+  }
+  .kpi-card:hover { border-color: var(--line-strong); }
+
+  input[type="range"] { -webkit-appearance: none; background: transparent; width: 100%; }
+  input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: var(--line-strong); border-radius: 9999px; }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; height: 14px; width: 14px; background: var(--accent);
+    border-radius: 9999px; margin-top: -6px; border: 2px solid #0f172a;
+    cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(16,185,129,0.16); }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  .dot { width: 5px; height: 5px; border-radius: 9999px; display: inline-block; }
+  .dot-ok { background: var(--accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.18); }
+  .dot-warn { background: var(--warn); box-shadow: 0 0 0 3px rgba(251,191,36,0.18); }
+  .dot-crit { background: var(--crit); box-shadow: 0 0 0 3px rgba(251,113,133,0.20); }
+  .dot-sky { background: var(--sky); box-shadow: 0 0 0 3px rgba(56,189,248,0.18); }
+  .dot-violet { background: var(--violet); box-shadow: 0 0 0 3px rgba(167,139,250,0.18); }
+
+  /* US Map state styling */
+  .state-rect { transition: opacity 120ms ease; }
+  .state-rect:hover { opacity: 0.85; }
+  .pin-shadow { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)); }
+
+  /* Copilot */
+  #copilot-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 60;
+    background: linear-gradient(135deg, var(--accent), var(--cobalt));
+    color: white; border-radius: 9999px;
+    padding: 12px 18px; font-family: "IBM Plex Sans"; font-size: 13px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.10) inset;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: transform 140ms ease, box-shadow 140ms ease;
+  }
+  #copilot-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.15) inset; }
+  #copilot-panel {
+    position: fixed; bottom: 88px; right: 24px; z-index: 60;
+    width: 380px; max-height: 70vh; min-height: 420px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.50);
+    display: none; flex-direction: column;
+    overflow: hidden;
+  }
+  #copilot-panel.open { display: flex; }
+  .copilot-msg-user {
+    background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(59,130,246,0.18));
+    border: 1px solid rgba(16,185,129,0.30);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: var(--text);
+    margin-left: 24px;
+  }
+  .copilot-msg-bot {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-mute);
+    margin-right: 24px;
+  }
+  .copilot-chip {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 9999px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-family: "IBM Plex Sans";
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease;
+    text-align: left;
+  }
+  .copilot-chip:hover { border-color: var(--accent); background: rgba(16,185,129,0.08); }
+
+  /* Print CSS for Tab 7 */
+  @media print {
+    @page {
+      size: letter;
+      margin: 0.75in 0.7in 0.95in 0.7in;
+      @top-right { content: "Confidential"; font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; }
+      @top-left  { content: "Northstar Logistics Partners, LLC"; font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; font-weight: 500; letter-spacing: 0.02em; color: #475569; }
+      @bottom-center { content: "Merchant Pricing Proposal  ·  Page " counter(page) " of " counter(pages); font-family: "IBM Plex Sans", sans-serif; font-size: 8pt; letter-spacing: 0.04em; color: #64748b; }
+      @bottom-right  { content: "Prototype · Not a real financial product"; font-family: "IBM Plex Sans", sans-serif; font-size: 7pt; color: #94a3b8; }
+    }
+    @page :first { @top-left { content: ""; } @top-right { content: ""; } }
+    html, body { background: white !important; }
+    body * { visibility: hidden; }
+    #panel-7, #panel-7 * { visibility: visible; }
+    #panel-7 { position: absolute; inset: 0; padding: 0 !important; background: white !important; color: #0f172a !important; }
+    #panel-7 .print-hidden, #panel-7 .print-hidden * { display: none !important; visibility: hidden !important; }
+    #panel-7, #panel-7 .bg-white { box-shadow: none !important; border-radius: 0 !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
+    #panel-7 section, #panel-7 div, #panel-7 h1, #panel-7 h2, #panel-7 h3, #panel-7 p, #panel-7 li, #panel-7 td, #panel-7 th, #panel-7 dl, #panel-7 dd, #panel-7 dt {
+      color: #0f172a !important; background: white !important; border-color: #cbd5e1 !important;
+    }
+    #panel-7 .print-accent { color: #047857 !important; }
+    #panel-7 .print-break-before { page-break-before: always; break-before: page; }
+    #panel-7 .print-avoid-break { page-break-inside: avoid; break-inside: avoid; }
+    #panel-7 h2 { page-break-after: avoid; break-after: avoid; }
+    #panel-7 { font-family: "Source Serif Pro", "Fraunces", Georgia, serif !important; font-size: 10.5pt; line-height: 1.55; }
+    #panel-7 h1 { font-family: "Fraunces", Georgia, serif !important; font-size: 24pt; font-weight: 500; letter-spacing: -0.02em; }
+    #panel-7 h2 { font-family: "IBM Plex Sans", sans-serif !important; font-size: 8.5pt !important; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #047857 !important; margin-top: 18pt; margin-bottom: 6pt; }
+    #panel-7 .num { font-family: "IBM Plex Mono", monospace !important; }
+    #panel-7 .font-sans, #panel-7 table, #panel-7 thead, #panel-7 tbody { font-family: "IBM Plex Sans", sans-serif !important; }
+    #copilot-fab, #copilot-panel { display: none !important; }
+  }
+</style>
+</head>
+<body class="bg-slate-900 text-slate-50 min-h-screen font-sans antialiased">
+
+<!-- Header -->
+<header class="border-b hairline backdrop-blur sticky top-0 z-40" style="background: rgba(34, 56, 91, 0.86);">
+  <div class="max-w-[1600px] mx-auto px-5 md:px-7 py-3.5 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="#" class="shrink-0" aria-label="MRO home">
+        <svg viewBox="0 0 40 40" class="h-9 w-9" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="mro-mark-grad" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stop-color="#10b981"/>
+              <stop offset="55%" stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient>
+            <linearGradient id="mro-mark-navy" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2b4670"/>
+              <stop offset="100%" stop-color="#13203a"/>
+            </linearGradient>
+          </defs>
+          <rect x="0.5" y="0.5" width="39" height="39" rx="8" ry="8" fill="url(#mro-mark-navy)" stroke="#5b79ac" stroke-width="1"/>
+          <rect x="8"    y="22" width="5" height="10" rx="1.2" fill="#f3f7ff" fill-opacity="0.30"/>
+          <rect x="17.5" y="16" width="5" height="16" rx="1.2" fill="#f3f7ff" fill-opacity="0.55"/>
+          <rect x="27"   y="9"  width="5" height="23" rx="1.2" fill="url(#mro-mark-grad)"/>
+          <path d="M10.5 21.5 Q15 13 20 16 Q25 19 29.5 9.5" stroke="url(#mro-mark-grad)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+          <circle cx="29.5" cy="9" r="1.9" fill="#10b981"/>
+        </svg>
+      </a>
+      <div class="min-w-0 flex items-baseline gap-3">
+        <div class="flex flex-col">
+          <div class="flex items-baseline gap-1.5">
+            <span class="display text-[15px] md:text-[17px] text-slate-50" style="font-variation-settings: 'opsz' 36; font-weight: 500; letter-spacing: -0.01em;">M<span style="background: linear-gradient(180deg,#10b981,#3b82f6); -webkit-background-clip:text; background-clip:text; color:transparent;">R</span>O</span>
+            <span class="eyebrow">Merchant Revenue Optimizer</span>
+          </div>
+          <div class="eyebrow text-[var(--text-dim)] mt-0.5" style="font-size: 9.5px; letter-spacing: 0.12em;">Payments-led · treasury and credit extended</div>
+        </div>
+        <div class="hidden md:block h-3 w-px bg-[var(--line-strong)]"></div>
+        <div class="hidden md:block text-sm text-slate-100 truncate font-medium">Northstar Logistics Partners, LLC</div>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-5 text-xs">
+      <div class="flex items-center gap-2 eyebrow"><span class="dot dot-ok"></span><span>Sandbox dataset</span></div>
+      <div class="h-3 w-px bg-[var(--line-strong)]"></div>
+      <div class="eyebrow text-[var(--text-dim)]">Payments diagnostic · pricing · capture</div>
+      <div class="h-3 w-px bg-[var(--line-strong)]"></div>
+      <div id="header-date" class="num text-[var(--text-mute)]"></div>
+    </div>
+  </div>
+  <nav class="border-t hairline overflow-x-auto">
+    <div class="max-w-[1600px] mx-auto px-3 md:px-5">
+      <div class="flex gap-0 text-[13px]" id="tabs"></div>
+    </div>
+  </nav>
+</header>
+
+<!-- Loading / error -->
+<div id="loading" class="fixed inset-0 grid place-items-center z-50" style="background: var(--bg);">
+  <div class="text-center">
+    <div class="h-8 w-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <div class="mt-3 text-sm text-[var(--text-mute)]">Loading sandbox data…</div>
+  </div>
+</div>
+<div id="error" class="hidden fixed inset-0 grid place-items-center z-50 p-6" style="background: rgba(34, 56, 91, 0.98);">
+  <div class="max-w-md text-center">
+    <div class="text-[var(--text)] text-sm font-medium">Unable to load the demonstration dataset.</div>
+    <div class="mt-2 text-xs text-[var(--text-mute)]">Please refresh the page. If the issue persists, try again in a moment.</div>
+  </div>
+</div>
+
+<!-- Main (full-width, no sidebar) -->
+<main class="max-w-[1600px] mx-auto">
+  <div id="panels" class="p-4 md:p-6 lg:p-8 space-y-6"></div>
+</main>
+
+<!-- Footer -->
+<footer class="border-t hairline mt-16">
+  <div class="max-w-[1600px] mx-auto px-5 md:px-7 py-6 space-y-3 text-[11px] text-[var(--text-mute)]">
+    <div class="leading-relaxed max-w-5xl">
+      <span class="eyebrow mr-1.5">Disclosure</span>
+      Simulated prototype data engineered by Michael Stanat. Not an actual financial product, credit decision, or
+      representation of live client data. Prototype is not affiliated with or endorsed by any financial institution.
+      All financial data is synthesized from Plaid sandbox test inputs. The prototype does not perform KYC, BSA/AML,
+      OFAC sanctions, beneficial-ownership screening, or credit-bureau checks. Nothing herein constitutes investment,
+      legal, banking, tax, or financial advice.
+    </div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 pt-3 border-t hairline">
+      <div>Created by Michael Stanat &nbsp;|&nbsp; © 2026 Michael Stanat &nbsp;|&nbsp; Merchant Revenue Optimizer portfolio prototype</div>
+      <div class="eyebrow">Sandbox · v6</div>
+    </div>
+  </div>
+</footer>
+
+<!-- Copilot floating button + panel -->
+<button id="copilot-fab" aria-label="Ask the Relationship">
+  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+  </svg>
+  <span>Ask the Relationship</span>
+</button>
+<div id="copilot-panel" role="dialog" aria-label="Ask the Relationship">
+  <div class="flex items-center justify-between px-4 py-3 border-b hairline">
+    <div class="flex items-center gap-2">
+      <span class="dot dot-ok"></span>
+      <div>
+        <div class="text-[13px] font-medium text-slate-50">Ask the Relationship</div>
+        <div class="text-[10px] text-[var(--text-dim)]">Pre-set questions · hard-coded answers · v6</div>
+      </div>
+    </div>
+    <button id="copilot-close" class="text-[var(--text-dim)] hover:text-slate-100" aria-label="Close">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6L18 18M6 18L18 6"/></svg>
+    </button>
+  </div>
+  <div id="copilot-conv" class="flex-1 overflow-y-auto px-4 py-4 space-y-3"></div>
+  <div class="px-4 py-3 border-t hairline space-y-2 bg-[rgba(0,0,0,0.10)]">
+    <div class="eyebrow mb-1.5">Suggested questions</div>
+    <div id="copilot-chips" class="flex flex-wrap gap-1.5"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================== *
+ *  CONFIG — Northstar Logistics Partners
+ * ================================================================== */
+const CONFIG = {
+  persona: {
+    name: "Northstar Logistics Partners, LLC",
+    industry: "Asset-light freight broker & 3PL",
+    revenue: 82_000_000,
+    employees: 140,
+    founded: 2006,
+    tenure: 0,
+    carriers: "3,200+",
+    shippers: "680+",
+    coreServices: "Truckload brokerage · LTL consolidation · drayage · expedited · limited US–MX cross-border",
+    headquarters: "Chicago, IL",
+    regionalOffices: ["Dallas, TX", "Atlanta, GA", "Newark, NJ"],
+    currentProcessor: "Regional acquirer",
+    currentBank: "Mid-tier commercial bank",
+    mcc: "4214 (Motor Freight Carriers and Trucking)",
+    chargebackRate: 0.0004,
+  },
+  payments: {
+    inboundVolume:  68_000_000,
+    outboundVolume: 52_000_000,
+    cardAddressableInbound: 23_100_000,
+    avgInboundTicket: 3_840,
+    avgOutboundPayout: 1_920,
+    inboundMixCurrent:  { ACH: 0.48, Card: 0.34, Wire: 0.12, Check: 0.06 },
+    inboundMixTarget:   { ACH: 0.36, Card: 0.28, RTP: 0.26, Wire: 0.08, Check: 0.02 },
+    outboundMixCurrent: { 'Same-day ACH': 0.72, 'Virtual card / push-to-card': 0.18, Wire: 0.06, Factoring: 0.04 },
+    outboundMixTarget:  { 'Same-day ACH': 0.48, 'Virtual card / push-to-card': 0.14, FedNow: 0.32, Wire: 0.04, Factoring: 0.02 },
+    railProfile: {
+      'ACH':                          { cost: 0.25,  speed: '1–3 days',     finality: 'Reversible (60 days)',  use: 'Recurring shipper invoices, low urgency' },
+      'Same-day ACH':                 { cost: 0.55,  speed: 'Same-day',     finality: 'Reversible',            use: 'Carrier payouts, predictable schedule' },
+      'Card':                         { cost: 2.65,  speed: 'Real-time auth', finality: 'Chargeback 120d',     use: 'Convenience, smaller-ticket shippers (CNP)' },
+      'Virtual card / push-to-card':  { cost: 1.80,  speed: 'Minutes',      finality: 'Near-final',            use: 'Expedited carrier payouts (Visa Direct / Mastercard Send)' },
+      'PBB':                          { cost: 0.50,  speed: 'Same-day',     finality: 'Near-final',            use: 'Recurring B2B, high-ticket shipper-side' },
+      'RTP':                          { cost: 0.45,  speed: 'Instant 24/7', finality: 'Immediate, irrevocable', use: 'Inbound RfP for shipper acceleration' },
+      'FedNow':                       { cost: 0.45,  speed: 'Instant 24/7', finality: 'Immediate, irrevocable', use: 'Outbound carrier payouts, urgent' },
+      'Wire':                         { cost: 15.00, speed: 'Same-day',     finality: 'Immediate, irrevocable', use: 'Large-ticket (>$25K), cross-border, escrow' },
+      'Check':                        { cost: 2.50,  speed: '3–5 days',     finality: 'Revocable',             use: 'Legacy shipper holdouts only' },
+      'Factoring':                    { cost: 1.20,  speed: '2–4 days',     finality: 'Assigned',              use: 'Carrier liquidity preference; bank passes through' },
+    },
+    migrationCostOneTime: 38_000,
+  },
+  geography: {
+    shipperOrigin: [
+      { state: 'IL', name: 'Illinois',     share: 0.21 },
+      { state: 'TX', name: 'Texas',        share: 0.17 },
+      { state: 'CA', name: 'California',   share: 0.14 },
+      { state: 'GA', name: 'Georgia',      share: 0.11 },
+      { state: 'NJ', name: 'New Jersey',   share: 0.09 },
+      { state: 'OH', name: 'Ohio',         share: 0.07 },
+      { state: 'PA', name: 'Pennsylvania', share: 0.06 },
+      { state: 'FL', name: 'Florida',      share: 0.05 },
+    ],
+    other: 0.10,
+    offices: [
+      { city: 'Chicago',  state: 'IL', role: 'HQ' },
+      { city: 'Dallas',   state: 'TX', role: 'Regional' },
+      { city: 'Atlanta',  state: 'GA', role: 'Regional' },
+      { city: 'Newark',   state: 'NJ', role: 'Regional' },
+    ],
+    top3Concentration: 0.52,
+    stateHHI: 1338,
+  },
+  // Approximate centroid coordinates for SVG state placement (lat, lon)
+  // We project to viewBox 0 0 640 380 using simple equirectangular.
+  stateCentroids: {
+    AL:[32.8,-86.8], AR:[34.8,-92.4], AZ:[34.2,-111.7], CA:[37.0,-119.4], CO:[39.0,-105.5],
+    CT:[41.6,-72.6], DC:[38.9,-77.0], DE:[38.9,-75.5], FL:[28.1,-81.5], GA:[32.6,-83.4],
+    IA:[42.0,-93.5], ID:[44.1,-114.6], IL:[40.0,-89.4], IN:[39.9,-86.2], KS:[38.5,-98.4],
+    KY:[37.8,-85.3], LA:[30.9,-92.4], MA:[42.3,-71.8], MD:[39.1,-77.0], ME:[45.4,-69.2],
+    MI:[44.3,-85.4], MN:[46.3,-94.6], MO:[38.4,-92.6], MS:[32.7,-89.9], MT:[47.0,-109.5],
+    NC:[35.5,-79.0], ND:[47.5,-100.4], NE:[41.5,-99.7], NH:[43.7,-71.5], NJ:[40.0,-74.7],
+    NM:[34.3,-106.2], NV:[39.0,-116.9], NY:[43.0,-75.5], OH:[40.3,-82.5], OK:[35.6,-97.5],
+    OR:[44.0,-120.5], PA:[40.9,-77.8], RI:[41.7,-71.5], SC:[34.0,-81.0], SD:[44.4,-100.2],
+    TN:[35.9,-86.8], TX:[31.0,-99.3], UT:[39.3,-111.9], VA:[37.5,-78.7], VT:[44.0,-72.6],
+    WA:[47.4,-120.7], WI:[44.5,-89.5], WV:[38.6,-80.5], WY:[42.9,-107.5],
+  },
+  paymentsOps: {
+    totalLeakage: 176_900,
+    scorecard: [
+      { metric: 'STP rate (shipper invoice-to-cash)',         current: '91.8%',  target: '95.5%',  gap: '370 bps',  annualValue: 50_500, source: 'Industry',     footnote: 'Shipper invoice-to-cash straight-through processing. Exceptions drive manual reconciliation across freight claims, detention, accessorials.' },
+      { metric: 'Auth approval rate (commercial card, CNP)',  current: '93.1%',  target: '95.0%',  gap: '190 bps',  annualValue: 33_000, source: 'Visa/MC' },
+      { metric: 'Level 3 data penetration',                   current: '14%',    target: '65%',    gap: '51 pts',   annualValue: 38_000, source: 'Visa/MC',      footnote: 'At $3,840 average shipper ticket with line-item freight detail (origin, destination, weight, class, accessorials), L3 data capture materially affects interchange qualification. Current processor does not transmit L3 fields.' },
+      { metric: 'Downgrade rate (card interchange qual.)',    current: '9.2%',   target: '4.5%',   gap: '470 bps',  annualValue: 22_500, source: 'Visa/MC' },
+      { metric: 'ACH return rate (inbound shipper debits)',   current: '0.38%',  target: '0.22%',  gap: '16 bps',   annualValue:  6_400, source: 'Nacha' },
+      { metric: 'Same-day ACH adoption across eligible carrier cohort', current: '54%', target: '85%', gap: '31 pts', annualValue: 14_500, source: 'Nacha',        footnote: '54% of carriers eligible for same-day ACH currently opt in. 72% of outbound payout volume flows through same-day ACH rails. Adoption lever vs volume share are different metrics.' },
+      { metric: 'Lockbox posting latency',                    current: '2.4 days', target: '1.1 days', gap: '1.3 days', annualValue: 8_900, source: 'Industry',  footnote: 'Inbound check and remittance float directly reduces borrowing base availability on the asset-based revolver.' },
+      { metric: 'Wire repair rate',                           current: '1.9%',   target: '0.8%',   gap: '110 bps',  annualValue:  3_100, source: 'Fed/Industry' },
+    ],
+    peerMedians: { stp: 0.962, authCNP: 0.951, l3: 0.55, sdach: 0.78 },
+    cohortNote: 'Synthetic cohort: 14 freight brokers and 3PLs · $40M–$150M revenue · NAICS 541614 and 484 · benchmarks reflect top-tier commercial bank and Visa/Mastercard averages.',
+  },
+  pricingModels: [
+    { id: 'ip',  name: 'Interchange-plus',  bps: 10, authFee: 0.08, blended: null,    monthly: 0,   recommended: true,
+      desc: 'Transparent, pass-through interchange; processor margin clearly disclosed. Wins on Level-3-eligible freight invoices.' },
+    { id: 'bl',  name: 'Blended',           bps: 0,  authFee: 0,    blended: 0.0265,  monthly: 0,   recommended: false,
+      desc: 'Single all-in rate. Predictable but obscures interchange optimization upside.' },
+    { id: 'fl',  name: 'Flat-rate',         bps: 0,  authFee: 0.30, blended: 0.029,   monthly: 0,   recommended: false,
+      desc: 'Single rate plus per-auth fee. Best for very small ticket; expensive at $3,840 avg.' },
+    { id: 'ent', name: 'Enterprise-tiered',  bps: 8,  authFee: 0.06, blended: null,    monthly: 0,
+      rebateBps: 1.5, rebateThreshold: 20_000_000, recommended: false,
+      desc: 'Interchange-plus with volume-tier rebate above $20M annual card volume. High-volume B2B merchants where interchange-plus is already established and the competitive advantage is in volume rebate, not headline rate.' },
+  ],
+  // Bank revenue economics
+  bankRevenue: {
+    depositNII: 0.0175,                  // 175 bps blended NII on combined balances
+    ablOutstanding: 40_000_000,
+    ablNetMarginBps: 175,                // bank net spread share on ABL (after funding) → ~$700K / yr
+    ablSofrSpreadBps: 375,               // SOFR + 375 stated rate
+    interchangeShareBps: 20,             // 20 bps share on shipper card volume
+    treasuryFeeIncome: 58_000,           // ZBA + positive pay + lockbox + controlled disbursement + ACH origination + FX
+    cardRebateVolume: 2_500_000,         // estimated annual corporate card spend (T&E + operations)
+    cardRebateBps: 10,                   // 10 bps share on card rebate → $25K / yr
+    cardRebate: 25_000,
+  },
+  // Revenue capture waterfall components — must reconcile to $386,000
+  capture: {
+    base: 23_100_000,
+    currentBlended: 0.0265,
+    optimizedBlended: 0.0178,
+    components: [
+      { label: 'Direct rate compression',     value: 200_970, note: '$23.1M × (2.65% − 1.78%)' },
+      { label: 'Level 3 capture',             value: 69_300,  note: '30 bps × $23.1M' },
+      { label: 'Tokenization capture',        value:  9_240,  note: '4 bps × $23.1M' },
+      { label: 'Auth lift (CNP)',             value: 56_500,  note: 'Recovered declined transactions × margin' },
+      { label: 'Downgrade recovery',          value: 16_000,  note: '470 bps qual. recovery on downgraded volume' },
+      { label: 'RTP migration (inbound)',     value: 33_990,  note: 'ACH-to-RTP ops lift on inbound shipper RfP' },
+    ],
+    total: 386_000,
+  },
+  covenants: [
+    { key: 'Min fixed-charge coverage', threshold: 1.15, unit: 'x',     direction: 'min' },
+    { key: 'Max leverage',              threshold: 3.00, unit: 'x',     direction: 'max' },
+    { key: 'Min availability',          threshold: 5_000_000, unit: 'usd', direction: 'min' },
+    { key: 'Borrowing base',            threshold: 'AR-only', unit: 'note', direction: 'note' },
+  ],
+  scoring: {
+    indicativeScore: 728,
+    indicativeGrade: 'B+',
+    confidence: 'high',
+  },
+  scale: 10,
+  assumptions: {
+    effectiveInterchangeRate: 0.0240,
+    payByBankRate: 0.0050,
+    l2l3RecoveryBps: 30,
+    lcrSavingsBps: 15,
+    moneyMarketYield: 0.0425,
+    checkingYield: 0.0000,
+    operatingReserveDays: 30,
+  },
+};
+
+/* ================================================================== *
+ *  Account override map — Northstar operating accounts
+ * ================================================================== */
+const PERSONA_OVERRIDES = {
+  'Plaid Checking':            { name: 'Operating Checking',                 group: 'operating',  scaled_override:    620_000 },
+  'Plaid Saving':              { name: 'Insurance Escrow (Cargo & Contingent)', group: 'operating', scaled_override:  540_000 },
+  'Plaid CD':                  { name: 'Fuel Advance Reserve',               group: 'operating',  scaled_override:    380_000 },
+  'Plaid Credit Card':         { name: 'Corporate Card',                     group: 'credit',     scaled_override:    140_000 },
+  'Plaid Money Market':        { name: 'Sweep Money Market',                 group: 'operating',  scaled_override:  1_180_000 },
+  'Plaid IRA':                 { name: 'Executive Retirement',               group: 'guarantor',  scaled_override:       null },
+  'Plaid 401k':                { name: 'Employee 401(k)',                    group: 'guarantor',  scaled_override:       null },
+  'Plaid Student Loan':        { name: 'Partner Guarantor Note',             group: 'debt',       scaled_override:    425_000 },
+  'Plaid Mortgage':            { name: 'Equipment Finance Line',             group: 'debt',       scaled_override:  6_000_000 },
+  'Plaid HSA':                 { name: 'Payroll & Tax Reserve',              group: 'operating',  scaled_override:    520_000 },
+  'Plaid Cash Management':     { name: 'Carrier Payout Reserve',             group: 'operating',  scaled_override:  1_450_000 },
+  'Plaid Business Credit Card':{ name: 'Regional Office T&E Card',           group: 'credit',     scaled_override:     18_000 },
+};
+
+/* ================================================================== *
+ *  Formatters
+ * ================================================================== */
+const fmtUSD0 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const fmtUSD2 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+const fmtPct1 = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
+const fmtPct2 = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
+const fmtNum0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const fmtNum2 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+const fmtMonthly = new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' });
+const fmtDaily = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const fmtBps = (bps) => `${Math.round(bps)} bps`;
+const usd = (n, digits = 0) => isFinite(n) ? (digits === 2 ? fmtUSD2 : fmtUSD0).format(n) : '—';
+const pct = (n) => isFinite(n) ? fmtPct1.format(n) : '—';
+const signed = (n) => (n >= 0 ? '+' : '') + usd(n);
+
+/* ================================================================== *
+ *  STATE + Chart.js defaults
+ * ================================================================== */
+const STATE = { data: null, accounts: [], transactions: [], charts: {}, usGeo: null, sim: {
+  shipperVolume: 23_100_000,
+  shipperGrowth: 0.05,
+  railShift: 0.20,
+  pricingTierBps: 10,
+  stress: false,
+}};
+
+const STATE_NAME_TO_ABBR = {
+  Alabama:'AL', Alaska:'AK', Arizona:'AZ', Arkansas:'AR', California:'CA',
+  Colorado:'CO', Connecticut:'CT', Delaware:'DE', 'District of Columbia':'DC', Florida:'FL',
+  Georgia:'GA', Hawaii:'HI', Idaho:'ID', Illinois:'IL', Indiana:'IN',
+  Iowa:'IA', Kansas:'KS', Kentucky:'KY', Louisiana:'LA', Maine:'ME',
+  Maryland:'MD', Massachusetts:'MA', Michigan:'MI', Minnesota:'MN', Mississippi:'MS',
+  Missouri:'MO', Montana:'MT', Nebraska:'NE', Nevada:'NV', 'New Hampshire':'NH',
+  'New Jersey':'NJ', 'New Mexico':'NM', 'New York':'NY', 'North Carolina':'NC', 'North Dakota':'ND',
+  Ohio:'OH', Oklahoma:'OK', Oregon:'OR', Pennsylvania:'PA', 'Puerto Rico':'PR',
+  'Rhode Island':'RI', 'South Carolina':'SC', 'South Dakota':'SD', Tennessee:'TN', Texas:'TX',
+  Utah:'UT', Vermont:'VT', Virginia:'VA', Washington:'WA', 'West Virginia':'WV',
+  Wisconsin:'WI', Wyoming:'WY',
+};
+
+async function loadUSGeo() {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const us = await res.json();
+    STATE.usGeo = topojson.feature(us, us.objects.states).features;
+  } catch (e) {
+    console.error('US map data load failed:', e);
+    STATE.usGeo = null;
+  }
+}
+
+function initChartDefaults() {
+  Chart.defaults.color = '#c8d4ec';
+  Chart.defaults.borderColor = '#4a6798';
+  Chart.defaults.font.family = '"IBM Plex Sans", system-ui, sans-serif';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.plugins.legend.labels.boxWidth = 8;
+  Chart.defaults.plugins.legend.labels.boxHeight = 8;
+  Chart.defaults.plugins.tooltip.backgroundColor = '#2b4670';
+  Chart.defaults.plugins.tooltip.borderColor = '#5b79ac';
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.plugins.tooltip.titleColor = '#f3f7ff';
+  Chart.defaults.plugins.tooltip.bodyColor = '#c8d4ec';
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.displayColors = false;
+  Chart.defaults.plugins.tooltip.bodyFont = { family: '"IBM Plex Mono"', size: 11 };
+  Chart.defaults.plugins.tooltip.titleFont = { family: '"IBM Plex Sans"', size: 11, weight: '500' };
+  Chart.defaults.plugins.tooltip.cornerRadius = 4;
+  Chart.defaults.elements.arc.borderWidth = 0;
+}
+function destroyChart(key) { if (STATE.charts[key]) { STATE.charts[key].destroy(); delete STATE.charts[key]; } }
+
+/* ================================================================== *
+ *  Data loader (Plaid sandbox JSON; account override + display only)
+ * ================================================================== */
+async function loadData() {
+  const res = await fetch('data.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  STATE.data = data;
+  const auth = data.balances?.accounts || data.auth?.accounts || [];
+  const HIDDEN_ACCOUNT_NAMES = new Set(['Executive Retirement', 'Employee 401(k)', 'Partner Guarantor Note']);
+  STATE.accounts = auth.map((a) => {
+    const o = PERSONA_OVERRIDES[a.name] || { name: a.name, group: 'operating', scaled_override: null };
+    const sign = (a.type === 'credit' || a.type === 'loan') ? -1 : 1;
+    const base = (a.balances?.current ?? 0) * CONFIG.scale;
+    const balance = o.scaled_override !== null ? o.scaled_override : base;
+    return {
+      id: a.account_id,
+      name: o.name,
+      group: o.group,
+      mask: a.mask,
+      type: a.type,
+      subtype: a.subtype,
+      balance,
+      display_balance: balance * sign,
+    };
+  }).filter((a) => !HIDDEN_ACCOUNT_NAMES.has(a.name));
+  STATE.transactions = data.transactions || [];
+}
+
+/* ================================================================== *
+ *  Tab definitions
+ * ================================================================== */
+const TABS = [
+  { id: 1, label: 'Merchant Profile',           short: '01', framing: 'The merchant you’re diagnosing.' },
+  { id: 2, label: 'Payments Ops Scorecard',     short: '02', framing: 'Where payments revenue is leaking today.', hero: true },
+  { id: 3, label: 'Pricing Architecture',       short: '03', framing: 'Which pricing model captures the most value.' },
+  { id: 4, label: 'Rail Migration',             short: '04', framing: 'How rail migration compresses cost and improves speed.' },
+  { id: 5, label: 'Revenue Capture Waterfall',  short: '05', framing: 'The full gross-to-net picture, plus the bank’s P&L from the relationship.' },
+  { id: 6, label: 'Relationship Context',       short: '06', framing: 'Relationship context and solvency stress that sharpen the pricing offer.' },
+  { id: 7, label: 'Pricing Proposal',           short: '07', framing: 'The pricing proposal the coverage banker walks in with.' },
+];
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = TABS.map((t, i) => `
+    <button data-tab="${t.id}" class="tab-btn ${t.hero ? 'tab-hero' : ''} px-4 md:px-5 py-3.5 whitespace-nowrap ${i === 0 ? 'active' : ''}">
+      <span class="num text-[10px] tracking-[0.12em] mr-2 ${t.hero ? 'text-[var(--accent)]' : 'text-[var(--text-dim)]'}">${t.short}</span>${t.label}
+    </button>
+  `).join('');
+  tabs.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchTab(parseInt(btn.dataset.tab, 10)));
+  });
+}
+function switchTab(id) {
+  document.querySelectorAll('#tabs .tab-btn').forEach((b) => b.classList.toggle('active', parseInt(b.dataset.tab, 10) === id));
+  document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', parseInt(p.dataset.panel, 10) !== id));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id === 7) renderTab7();
+  const builder = { 2: buildTab2Charts, 3: buildTab3Charts, 4: buildTab4Charts, 5: buildTab5Charts, 6: buildTab6Charts }[id];
+  if (builder) {
+    requestAnimationFrame(() => requestAnimationFrame(builder));
+  }
+}
+
+function renderAllPanels() {
+  const panels = document.getElementById('panels');
+  panels.innerHTML = TABS.map((t) => `<section data-panel="${t.id}" class="${t.id === 1 ? '' : 'hidden'}"></section>`).join('');
+  renderTab1(); renderTab2(); renderTab3(); renderTab4(); renderTab5(); renderTab6(); renderTab7();
+}
+
+/* ================================================================== *
+ *  Reusable building blocks
+ * ================================================================== */
+function tabHeading(eyebrow, title, framingId) {
+  const tab = TABS.find((t) => t.id === framingId);
+  return `
+    <div class="mb-8">
+      <div class="text-[10px] tracking-[0.16em] text-[var(--text-dim)] uppercase font-mono mb-1">${tab ? tab.framing : ''}</div>
+      <div class="eyebrow eyebrow-accent">${eyebrow}</div>
+      <h2 class="mt-2 text-3xl md:text-4xl text-slate-50 display" style="font-variation-settings: 'opsz' 72, 'SOFT' 30; font-weight: 400;">${title}</h2>
+    </div>
+  `;
+}
+
+function kpiSmall(label, value, sub, color) {
+  const c = { ok: 'text-slate-50', warn: 'text-[var(--warn)]', crit: 'text-[var(--crit)]', accent: 'text-emerald-300' }[color || 'ok'];
+  return `
+    <div class="border hairline rounded-sm px-4 py-3.5 kpi-card">
+      <div class="eyebrow">${label}</div>
+      <div class="mt-2 text-[22px] leading-none num font-light ${c}">${value}</div>
+      <div class="mt-2 text-[11px] text-[var(--text-mute)]">${sub}</div>
+    </div>
+  `;
+}
+
+/* ================================================================== *
+ *  STUB tab renderers — filled in by subsequent edits
+ * ================================================================== */
+/* -------- Tab 1 — Merchant Profile -------- */
+function renderTab1() {
+  const el = document.querySelector('[data-panel="1"]');
+  const p = CONFIG.persona;
+  const g = CONFIG.geography;
+  const deposits = STATE.accounts.filter((a) => a.type === 'depository').reduce((s, a) => s + a.balance, 0);
+  const today = fmtDaily.format(new Date());
+
+  el.innerHTML = `
+    <!-- Relationship summary strip -->
+    <div class="border hairline-strong rounded-lg p-5 mb-6 flex flex-col md:flex-row md:items-center gap-5" style="background: linear-gradient(90deg, rgba(16,185,129,0.06), rgba(59,130,246,0.04) 60%, transparent);">
+      <div class="flex items-baseline gap-3">
+        <div class="display text-5xl text-slate-50 num font-light leading-none">${CONFIG.scoring.indicativeScore}</div>
+        <div>
+          <div class="eyebrow">Indicative tier</div>
+          <div class="text-[13px] text-slate-100 font-medium">${CONFIG.scoring.indicativeGrade} (illustrative) · ${CONFIG.scoring.confidence} confidence</div>
+        </div>
+      </div>
+      <div class="hidden md:block h-10 w-px bg-[var(--line-strong)]"></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 flex-1">
+        <div><div class="eyebrow">Combined balances</div><div class="mt-1 num text-[17px] text-slate-50 font-light">${usd(deposits)}</div></div>
+        <div><div class="eyebrow">Current bank tenure</div><div class="mt-1 num text-[17px] text-slate-50 font-light">0 yrs <span class="text-[var(--text-dim)] text-[12px]">· net-new pitch</span></div></div>
+        <div><div class="eyebrow">Est. current wallet share</div><div class="mt-1 num text-[17px] text-slate-50 font-light">28% <span class="text-[var(--text-dim)] text-[12px]">at incumbent</span></div></div>
+        <div><div class="eyebrow">Opportunity size</div><div class="mt-1 num text-[13px] text-emerald-300 font-light leading-snug">Y1 $550K · steady-state ~$900K <span class="text-[var(--text-dim)]">· 5-yr ~$4.94M</span></div></div>
+      </div>
+    </div>
+
+    ${tabHeading('Merchant profile', p.name, 1)}
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- LEFT: persona card -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="border hairline rounded-lg p-6">
+          <div class="eyebrow">Client snapshot</div>
+          <dl class="mt-4 text-[12.5px] space-y-2.5">
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Industry</dt><dd class="text-[var(--text)]">Freight brokerage · 3PL</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Revenue</dt><dd class="text-[var(--text)] num">${usd(p.revenue)}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Employees</dt><dd class="text-[var(--text)] num">${p.employees}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Founded</dt><dd class="text-[var(--text)] num">${p.founded} <span class="text-[var(--text-dim)]">(${2026 - p.founded} yrs)</span></dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Carrier network</dt><dd class="text-[var(--text)] num">${p.carriers}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Active shippers</dt><dd class="text-[var(--text)] num">${p.shippers}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">MCC</dt><dd class="text-[var(--text)]">${p.mcc}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Chargeback rate</dt><dd class="text-[var(--text)] num">${fmtPct2.format(p.chargebackRate)}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Current processor</dt><dd class="text-[var(--text)]">${p.currentProcessor}</dd></div>
+            <div class="flex justify-between"><dt class="text-[var(--text-dim)]">Current bank</dt><dd class="text-[var(--text)]">${p.currentBank}</dd></div>
+          </dl>
+          <div class="mt-5 pt-5 border-t hairline">
+            <div class="eyebrow">Core services</div>
+            <div class="mt-2 text-[12.5px] text-[var(--text-mute)] leading-relaxed">${p.coreServices}</div>
+          </div>
+        </div>
+
+        <!-- Boarding Risk Tier -->
+        <div class="border hairline rounded-lg p-6">
+          <div class="flex items-start justify-between mb-3">
+            <div class="eyebrow">Boarding risk tier</div>
+            <span class="inline-flex items-center gap-1.5 border border-emerald-500/40 rounded-sm px-2 py-0.5 text-[11px] text-emerald-300 font-medium" style="background: rgba(16,185,129,0.07);">
+              <span class="dot dot-ok"></span> Tier 2
+            </span>
+          </div>
+          <div class="text-[12.5px] text-[var(--text-mute)] leading-relaxed">
+            Established 3PL, stable freight vertical, low chargeback profile, card-not-present commercial flows,
+            moderate working-capital cyclicality. Modeled underwriting suggests standard terms with no hold and standard reserve (illustrative).
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: US map -->
+      <div class="lg:col-span-3 border hairline rounded-lg p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <div class="eyebrow">Shipper origin concentration + operating footprint</div>
+            <div class="mt-1 text-[11px] text-[var(--text-mute)]">Layer 1: share of inbound freight revenue by shipper origin state · Layer 2: HQ + regional offices</div>
+          </div>
+          <div class="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+            <span class="inline-flex items-center gap-1 text-[var(--text-dim)]"><span class="h-2 w-2 rounded-sm bg-emerald-500/60"></span>&lt;10%</span>
+            <span class="inline-flex items-center gap-1 text-[var(--text-dim)]"><span class="h-2 w-2 rounded-sm bg-amber-400/70"></span>10–20%</span>
+            <span class="inline-flex items-center gap-1 text-[var(--text-dim)]"><span class="h-2 w-2 rounded-sm bg-rose-400/80"></span>&gt;20%</span>
+          </div>
+        </div>
+        ${renderUSMap()}
+        <div class="mt-4 pt-4 border-t hairline text-[11.5px] text-[var(--text-mute)] leading-relaxed">
+          Top-3 shipper origin concentration: <span class="num text-[var(--text)]">${fmtPct1.format(g.top3Concentration)}</span>.
+          State-level HHI: <span class="num text-[var(--text)]">${g.stateHHI.toLocaleString()}</span> (moderately concentrated).
+          HHI calculated treating &lsquo;Other states&rsquo; as a single 10% bucket; disaggregation across 8 named states would yield ~1,251.
+          Freight lanes span all lower 48 plus limited US–Mexico cross-border. Four operating locations:
+          <span class="text-[var(--text)]">Chicago HQ, Dallas, Atlanta, Newark</span>.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderUSMap() {
+  if (STATE.usGeo && typeof d3 !== 'undefined' && d3.geoPath) {
+    return renderUSMapReal();
+  }
+  return renderUSMapFallback();
+}
+
+function renderUSMapReal() {
+  const g = CONFIG.geography;
+  const stateShare = {}; g.shipperOrigin.forEach((s) => stateShare[s.state] = s.share);
+  const geoPath = d3.geoPath();
+  // us-atlas states-albers-10m is pre-projected to geoAlbersUsa with scale 1300 / translate [487.5, 305]
+  const projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305]);
+
+  const colorFor = (share) => {
+    if (share == null) return '#2a4678';
+    if (share > 0.20)   return '#fb7185';
+    if (share >= 0.10)  return '#fbbf24';
+    return '#10b981';
+  };
+
+  const paths = STATE.usGeo.map((f) => {
+    const abbr = STATE_NAME_TO_ABBR[f.properties.name];
+    const share = stateShare[abbr];
+    const d = geoPath(f);
+    if (!d) return '';
+    const fill = colorFor(share);
+    const opacity = share == null ? 0.30 : 0.85;
+    return `<path d="${d}" fill="${fill}" fill-opacity="${opacity}" stroke="#22385b" stroke-width="0.7" class="state-rect"/>`;
+  }).join('');
+
+  const labels = STATE.usGeo.map((f) => {
+    const abbr = STATE_NAME_TO_ABBR[f.properties.name];
+    const share = stateShare[abbr];
+    if (!share) return '';
+    const [cx, cy] = geoPath.centroid(f);
+    if (!isFinite(cx) || !isFinite(cy)) return '';
+    return `<text x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#0f172a" paint-order="stroke" stroke="rgba(255,255,255,0.35)" stroke-width="2">${abbr} · ${Math.round(share * 100)}%</text>`;
+  }).join('');
+
+  const officeCoords = {
+    'Chicago': { lat: 41.88, lon: -87.63, role: 'HQ' },
+    'Dallas':  { lat: 32.78, lon: -96.80, role: 'Regional' },
+    'Atlanta': { lat: 33.75, lon: -84.39, role: 'Regional' },
+    'Newark':  { lat: 40.74, lon: -74.17, role: 'Regional' },
+  };
+  const pins = Object.entries(officeCoords).map(([city, c]) => {
+    const p = projection([c.lon, c.lat]);
+    if (!p) return '';
+    const [x, y] = p;
+    const isHQ = c.role === 'HQ';
+    const r = isHQ ? 9 : 6;
+    return `
+      <g class="pin-shadow">
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r + 5}" fill="rgba(15,23,42,0.55)"/>
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${isHQ ? '#f3f7ff' : '#38bdf8'}" stroke="#0f172a" stroke-width="1.5"/>
+        ${isHQ ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#10b981"/>` : ''}
+        <text x="${(x + r + 4).toFixed(1)}" y="${(y - r - 2).toFixed(1)}" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="#f3f7ff" paint-order="stroke" stroke="rgba(15,23,42,0.7)" stroke-width="3">${city}</text>
+        <text x="${(x + r + 4).toFixed(1)}" y="${(y + 10).toFixed(1)}" font-family="IBM Plex Mono" font-size="10" fill="#c8d4ec" letter-spacing="0.08em" paint-order="stroke" stroke="rgba(15,23,42,0.7)" stroke-width="3">${c.role.toUpperCase()}</text>
+      </g>
+    `;
+  }).join('');
+
+  return `
+    <div class="relative">
+      <svg viewBox="0 0 975 610" class="w-full h-auto" style="background: rgba(0,0,0,0.15); border-radius: 8px;">
+        ${paths}
+        ${labels}
+        ${pins}
+      </svg>
+    </div>
+  `;
+}
+
+function renderUSMapFallback() {
+  const g = CONFIG.geography;
+  const centroids = CONFIG.stateCentroids;
+  const lonMin = -125, lonMax = -66, latMin = 24, latMax = 49;
+  const projX = (lon) => ((lon - lonMin) / (lonMax - lonMin)) * 620 + 10;
+  const projY = (lat) => ((latMax - lat) / (latMax - latMin)) * 360 + 10;
+  const stateShare = {}; g.shipperOrigin.forEach((s) => stateShare[s.state] = s.share);
+
+  const colorFor = (share) => {
+    if (share == null) return '#2a4678';
+    if (share > 0.20)   return '#fb7185';
+    if (share >= 0.10)  return '#fbbf24';
+    return '#10b981';
+  };
+  const fillOpacity = (share) => share == null ? 0.35 : 0.85;
+
+  const stateRects = Object.entries(centroids).map(([abbr, [lat, lon]]) => {
+    const cx = projX(lon), cy = projY(lat);
+    const share = stateShare[abbr];
+    const w = share ? 40 : 30, h = share ? 26 : 20;
+    const x = cx - w / 2, y = cy - h / 2;
+    const fill = colorFor(share);
+    const label = share ? `${abbr} · ${Math.round(share * 100)}%` : abbr;
+    return `
+      <g class="state-rect">
+        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w}" height="${h}" rx="3" fill="${fill}" fill-opacity="${fillOpacity(share)}" stroke="#5b79ac" stroke-width="0.5"/>
+        <text x="${cx.toFixed(1)}" y="${(cy + (share ? 3.5 : 3)).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="${share ? 8.5 : 7}" font-weight="${share ? 500 : 400}" fill="${share ? '#0f172a' : '#c8d4ec'}">${label}</text>
+      </g>
+    `;
+  }).join('');
+
+  const officeCoords = {
+    'Chicago': { lat: 41.88, lon: -87.63, role: 'HQ' },
+    'Dallas':  { lat: 32.78, lon: -96.80, role: 'Regional' },
+    'Atlanta': { lat: 33.75, lon: -84.39, role: 'Regional' },
+    'Newark':  { lat: 40.74, lon: -74.17, role: 'Regional' },
+  };
+  const pins = Object.entries(officeCoords).map(([city, c]) => {
+    const x = projX(c.lon), y = projY(c.lat);
+    const isHQ = c.role === 'HQ';
+    const r = isHQ ? 9 : 6;
+    return `
+      <g class="pin-shadow">
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r + 4}" fill="rgba(255,255,255,0.08)"/>
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${isHQ ? '#f3f7ff' : '#38bdf8'}" stroke="#0f172a" stroke-width="1.5"/>
+        ${isHQ ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#10b981"/>` : ''}
+        <text x="${(x + r + 4).toFixed(1)}" y="${(y - r - 2).toFixed(1)}" font-family="IBM Plex Sans" font-size="10" font-weight="600" fill="#f3f7ff">${city}</text>
+        <text x="${(x + r + 4).toFixed(1)}" y="${(y + 6).toFixed(1)}" font-family="IBM Plex Mono" font-size="8" fill="#c8d4ec" letter-spacing="0.08em">${c.role.toUpperCase()}</text>
+      </g>
+    `;
+  }).join('');
+
+  return `
+    <div class="relative">
+      <svg viewBox="0 0 640 380" class="w-full h-auto" style="background: rgba(0,0,0,0.15); border-radius: 8px;">
+        <defs>
+          <pattern id="us-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0 L0 0 0 40" fill="none" stroke="rgba(91,121,172,0.10)" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="640" height="380" fill="url(#us-grid)"/>
+        ${stateRects}
+        ${pins}
+      </svg>
+    </div>
+  `;
+}
+/* -------- Tab 2 — Payments Operations Scorecard (HERO) -------- */
+function renderTab2() {
+  const el = document.querySelector('[data-panel="2"]');
+  const ops = CONFIG.paymentsOps;
+  const total = ops.totalLeakage;
+
+  el.innerHTML = `
+    ${tabHeading('Hero · Payments operations', 'Total annual revenue leakage', 2)}
+
+    <!-- Headline leakage card -->
+    <div class="border hairline-strong rounded-lg p-8 md:p-10 mb-6 relative overflow-hidden" style="background: radial-gradient(900px 420px at 15% 10%, rgba(251,113,133,0.12), transparent 60%), radial-gradient(700px 400px at 85% 90%, rgba(16,185,129,0.08), transparent 60%);">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="eyebrow" style="color: var(--crit)">Annual revenue leakage</div>
+        <div class="eyebrow">Illustrative · 8 operational metrics</div>
+      </div>
+      <div class="mt-4 flex items-baseline gap-4 flex-wrap">
+        <div class="display text-6xl md:text-8xl lg:text-9xl num text-slate-50" style="font-variation-settings: 'opsz' 144, 'SOFT' 30; font-weight: 300;">${usd(total)}</div>
+        <div class="text-sm text-[var(--text-mute)] leading-relaxed max-w-xs">annual revenue being left on the table across shipper-inbound card, ACH, wire, and lockbox rails</div>
+      </div>
+      <div class="mt-6 text-[13px] text-[var(--text-mute)] leading-relaxed max-w-4xl border-l-2 border-emerald-500/60 pl-4">
+        Payments sophistication lives in operational metrics, not the P&amp;L summary. Each basis point compounds against
+        <span class="num text-slate-100">${usd(CONFIG.payments.inboundVolume + CONFIG.payments.outboundVolume)}</span>
+        in annual inbound + outbound volume.
+      </div>
+    </div>
+
+    <!-- Credibility callout -->
+    <div class="mb-6 border border-emerald-500/25 rounded-lg px-5 py-4 flex items-start gap-3" style="background: linear-gradient(180deg, rgba(16,185,129,0.05), transparent 90%);">
+      <svg viewBox="0 0 24 24" class="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <div class="text-[12.5px] text-[var(--text)] leading-relaxed max-w-5xl">
+        <span class="eyebrow eyebrow-accent mr-1.5">Data provenance</span>
+        Metrics are modeled on scaled Plaid sandbox inputs and synthetic benchmarks for a freight brokerage profile.
+        Production deployment would ingest merchant processor statements, TMS (transportation management system) data,
+        ERP and AR ledger data, bank account data via Plaid or direct feeds, and commercial credit file inputs.
+        Benchmarks drawn from Visa/Mastercard commercial card interchange tables, Nacha operating rules and network statistics, Federal Reserve ACH network reports, and industry surveys. Per-metric source attribution in source column. Exact figures illustrative.
+      </div>
+    </div>
+
+    <!-- Scorecard table -->
+    <div class="border hairline rounded-lg p-6 mb-6">
+      <div class="overflow-x-auto">
+        <table class="w-full text-[13px]">
+          <thead>
+            <tr class="eyebrow text-left border-b hairline-strong">
+              <th class="pb-3 pr-4 font-medium">Metric</th>
+              <th class="pb-3 pr-4 font-medium text-right">Current</th>
+              <th class="pb-3 pr-4 font-medium text-right">Target</th>
+              <th class="pb-3 pr-4 font-medium text-right">Gap</th>
+              <th class="pb-3 pr-4 font-medium text-right">Annual value if closed</th>
+              <th class="pb-3 font-medium text-right">Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ops.scorecard.map((r) => `
+              <tr class="border-b hairline">
+                <td class="py-3 pr-4">
+                  <div class="text-slate-100">${r.metric}</div>
+                  ${r.footnote ? `<div class="mt-1 text-[10.5px] text-[var(--text-dim)] leading-snug italic max-w-2xl">${r.footnote}</div>` : ''}
+                </td>
+                <td class="py-3 pr-4 text-right num text-[var(--warn)]">${r.current}</td>
+                <td class="py-3 pr-4 text-right num text-emerald-300">${r.target}</td>
+                <td class="py-3 pr-4 text-right num text-[var(--text-mute)]">${r.gap}</td>
+                <td class="py-3 pr-4 text-right num text-slate-50 font-medium">${usd(r.annualValue)}</td>
+                <td class="py-3 text-right text-[11px] text-[var(--text-dim)] uppercase tracking-wider">${r.source || ''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="pt-4 text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">Total annual leakage</td>
+              <td class="pt-4 text-right num text-2xl text-emerald-300 font-light">${usd(total)}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mt-5 pt-4 border-t hairline text-[11px] text-[var(--text-dim)] leading-relaxed">
+        Benchmarks reflect top-tier commercial bank and Visa/Mastercard averages for 3PL and freight broker merchants
+        with comparable MCC, ticket size, and channel profile.
+      </div>
+    </div>
+
+    <!-- Peer Benchmarking -->
+    <div class="border hairline rounded-lg p-6 mb-6">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <div class="eyebrow">Peer benchmarking <span class="text-[var(--text-dim)] normal-case tracking-normal">(synthetic cohort)</span></div>
+          <div class="mt-1 text-[11px] text-[var(--text-mute)]">${ops.cohortNote}</div>
+        </div>
+      </div>
+      <div style="height: 260px"><canvas id="chart-tab2-peer"></canvas></div>
+    </div>
+
+    <!-- Footnotes -->
+    <div class="mt-4 pt-4 border-t hairline">
+      <div class="eyebrow mb-3">Footnotes · Tab 2</div>
+      <ol class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[11px] text-[var(--text-mute)] leading-relaxed list-decimal ml-4 marker:text-[var(--text-dim)]">
+        <li>STP = straight-through processing: share of inbound shipper invoices that auto-match to delivery and settle to cash without manual intervention.</li>
+        <li>CNP = card-not-present. Freight brokerage is predominantly CNP (phone + portal + EDI); interchange rates and auth profiles differ from card-present retail.</li>
+        <li>Level 3 data = line-item freight detail (origin, destination, weight, class, accessorials) transmitted with the card transaction to qualify for lower interchange tiers.</li>
+        <li>Downgrade rate = share of card volume that falls to standard or EIRF rates because L2/L3 data requirements were not met.</li>
+        <li>Lockbox posting latency = elapsed days from remittance receipt to GL posting. Directly compresses borrowing-base availability on the asset-based revolver.</li>
+        <li>Wire repair rate = share of inbound/outbound wires requiring manual intervention due to incorrect beneficiary, missing reference, or routing issues.</li>
+      </ol>
+    </div>
+  `;
+}
+function buildTab2Charts() {
+  destroyChart('tab2peer');
+  const ctx = document.getElementById('chart-tab2-peer');
+  if (!ctx) return;
+  const ops = CONFIG.paymentsOps;
+  const labels = ['STP rate', 'Auth approval (CNP)', 'L3 penetration', 'Same-day ACH'];
+  const northstar = [0.918, 0.931, 0.14, 0.54].map((v) => v * 100);
+  const peers = [ops.peerMedians.stp, ops.peerMedians.authCNP, ops.peerMedians.l3, ops.peerMedians.sdach].map((v) => v * 100);
+  STATE.charts.tab2peer = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Northstar (current)', data: northstar, backgroundColor: 'rgba(251, 191, 36, 0.80)', borderRadius: 4 },
+        { label: 'Peer median',          data: peers,     backgroundColor: 'rgba(16, 185, 129, 0.75)', borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'rect' } },
+                 tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.y.toFixed(1)}%` } } },
+      scales: { x: { grid: { display: false } },
+                y: { ticks: { callback: (v) => v + '%' }, suggestedMax: 100 } },
+    },
+  });
+  STATE.charts.tab2peer.resize();
+}
+/* -------- Tab 3 — Pricing Architecture Simulator -------- */
+function priceCost(model, volume, avgTicket, tierBps) {
+  const txCount = volume / avgTicket;
+  // Underlying interchange pass-through for commercial CNP freight is ~1.85% blended.
+  const interchangePassthrough = 0.0185;
+  if (model.id === 'ip')  return volume * interchangePassthrough + volume * (tierBps / 10_000) + txCount * model.authFee;
+  if (model.id === 'bl')  return volume * model.blended;
+  if (model.id === 'fl')  return volume * model.blended + txCount * model.authFee;
+  if (model.id === 'ent') {
+    const base = volume * interchangePassthrough + volume * (model.bps / 10_000) + txCount * model.authFee;
+    const rebate = Math.max(0, volume - model.rebateThreshold) * (model.rebateBps / 10_000);
+    return base - rebate;
+  }
+  return 0;
+}
+function bankRevFromModel(model, volume, tierBps) {
+  // Bank retains: ~60% of the interchange-plus markup, 15 bps on blended, 10 bps on flat
+  if (model.id === 'ip') return volume * (tierBps / 10_000) * 0.60;
+  if (model.id === 'bl') return volume * 0.0015;
+  if (model.id === 'fl') return volume * 0.0010;
+  if (model.id === 'ent') {
+    const baseBankRev = volume * (model.bps / 10_000) * 0.60;
+    const rebatePaid = Math.max(0, volume - model.rebateThreshold) * (model.rebateBps / 10_000);
+    return baseBankRev - rebatePaid * 0.60;
+  }
+  return 0;
+}
+function renderTab3() {
+  const el = document.querySelector('[data-panel="3"]');
+  const s = STATE.sim;
+  const volume = s.shipperVolume * (1 + s.shipperGrowth) * (s.stress ? 0.82 : 1);
+  const avg = CONFIG.payments.avgInboundTicket;
+
+  el.innerHTML = `
+    ${tabHeading('Pricing · modeled', 'Pricing architecture simulator', 3)}
+
+    <!-- Scenario presets + stress flag -->
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <span class="eyebrow mr-1">Scenarios</span>
+      <button class="sim-preset-3 border hairline-strong rounded-sm px-3 py-1.5 text-[11px] text-slate-100 hover:border-emerald-500/50 transition" data-scenario="base">Base case</button>
+      <button class="sim-preset-3 border hairline-strong rounded-sm px-3 py-1.5 text-[11px] text-slate-100 hover:border-emerald-500/50 transition" data-scenario="full">Full optimization</button>
+      <button class="sim-preset-3 border border-amber-500/40 rounded-sm px-3 py-1.5 text-[11px] text-amber-300 hover:border-amber-400 transition flex items-center gap-1.5" data-scenario="stress" style="background: rgba(251,191,36,0.06);">
+        <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        Freight recession stress test
+      </button>
+      <span class="text-[11px] text-[var(--text-dim)] ml-2 hidden md:inline">−18% shipper volume · +15% carrier rate pressure · +25 bps ACH return</span>
+    </div>
+
+    <!-- Sliders -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      ${sliderBlock('Annual shipper card volume', 'sim3-vol', 15_000_000, 35_000_000, 100_000, s.shipperVolume, 'usd', 'Share of $68M inbound on card rail')}
+      ${sliderBlock('Shipper volume growth',      'sim3-growth', -0.20, 0.50, 0.01, s.shipperGrowth, 'pct', 'Projected 12-mo trajectory')}
+      ${sliderBlock('Rail shift to RTP / FedNow', 'sim3-rail', 0, 0.50, 0.05, s.railShift, 'pct', 'Inbound RTP + outbound FedNow')}
+      ${sliderBlock('Pricing tier (IC-plus bps)', 'sim3-tier', 8, 25, 1, s.pricingTierBps, 'bps', 'Processor margin over interchange')}
+    </div>
+
+    <!-- 4 pricing models -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="pricing-grid"></div>
+
+    <!-- Live outputs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div class="border hairline rounded-sm px-4 py-3"><div class="eyebrow">Merchant annual cost ${s.stress ? '<span class="ml-1 text-amber-300">stressed</span>' : ''}</div><div id="tab3-merchant-cost" class="mt-2 num text-2xl text-slate-50 font-light">—</div></div>
+      <div class="border hairline rounded-sm px-4 py-3"><div class="eyebrow">Bank annual revenue</div><div id="tab3-bank-rev" class="mt-2 num text-2xl text-emerald-300 font-light">—</div></div>
+      <div class="border hairline rounded-sm px-4 py-3"><div class="eyebrow">Blended net yield</div><div id="tab3-yield" class="mt-2 num text-2xl text-slate-50 font-light">—</div></div>
+      <div class="border hairline rounded-sm px-4 py-3"><div class="eyebrow">Recommended tier</div><div id="tab3-tier" class="mt-2 num text-2xl text-emerald-300 font-light">—</div></div>
+    </div>
+
+    <!-- Competitive takeaway -->
+    <div class="border hairline rounded-lg p-6 mb-6 grid grid-cols-1 md:grid-cols-[auto,1fr] gap-6 items-start">
+      <div>
+        <div class="eyebrow">Competitive takeaway</div>
+        <div class="mt-2 display text-3xl num text-emerald-300 font-light leading-none">${usd(62_000)}</div>
+        <div class="text-[11px] text-[var(--text-dim)] mt-1">indicative annual value</div>
+      </div>
+      <div class="text-[13px] text-[var(--text-mute)] leading-relaxed max-w-4xl">
+        Current processor is likely a regional acquirer. Capture gap vs. a top-tier national bank: <span class="text-slate-100">15 bps interchange optimization</span>,
+        <span class="text-slate-100">Level 3 data capture</span> with freight line-item detail, <span class="text-slate-100">next-day funding</span>,
+        and <span class="text-slate-100">integrated carrier-payout rails</span>. Plus elimination of dual-rail reconciliation overhead across
+        shipper receipts and carrier payouts.
+      </div>
+    </div>
+
+    <!-- Footnotes -->
+    <div class="mt-4 pt-4 border-t hairline">
+      <div class="eyebrow mb-3">Footnotes · Tab 3 assumptions</div>
+      <ol class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[11px] text-[var(--text-mute)] leading-relaxed list-decimal ml-4 marker:text-[var(--text-dim)]">
+        <li>Interchange-plus pricing passes through network interchange at cost plus a disclosed processor margin (bps + per-auth fee).</li>
+        <li>Blended rate conceals interchange dynamics; acceptable for simplicity but forfeits L2/L3 qualification upside.</li>
+        <li>Flat-rate (2.9% + $0.30) targets low-ticket retail; expensive at Northstar's $3,840 average shipper ticket.</li>
+        <li>Enterprise-tiered bundles interchange-plus with a volume rebate above $20M annual card volume. Secondary option for very-high-volume mature buyers where interchange-plus is already established and competitive differentiation shifts to rebate, not headline rate.</li>
+        <li>Bank revenue share assumed at ~60% of interchange-plus markup (IP and Enterprise-tiered); 10–15 bps retention on blended and flat-rate models.</li>
+      </ol>
+    </div>
+  `;
+
+  attachTab3Handlers();
+  updateTab3();
+}
+
+function sliderBlock(label, id, min, max, step, val, kind, sub) {
+  const display = kind === 'pct' ? fmtPct1.format(val) : kind === 'usd' ? usd(val) : kind === 'bps' ? `${val} bps` : val;
+  return `
+    <div class="border hairline rounded-lg p-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="eyebrow">${label}</div>
+          <div class="mt-0.5 text-[10.5px] text-[var(--text-dim)] leading-snug max-w-[180px]">${sub}</div>
+        </div>
+        <div id="${id}-val" class="num text-lg text-emerald-300 font-light leading-none">${display}</div>
+      </div>
+      <input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-kind="${kind}" class="mt-4 w-full"/>
+      <div class="mt-1.5 flex justify-between text-[10px] text-[var(--text-dim)] num">
+        <span>${kind === 'pct' ? fmtPct1.format(min) : kind === 'usd' ? usd(min) : kind === 'bps' ? min + ' bps' : min}</span>
+        <span>${kind === 'pct' ? fmtPct1.format(max) : kind === 'usd' ? usd(max) : kind === 'bps' ? max + ' bps' : max}</span>
+      </div>
+    </div>
+  `;
+}
+
+function attachTab3Handlers() {
+  const bind = (id, key, kind) => {
+    const slider = document.getElementById(id);
+    const valEl = document.getElementById(id + '-val');
+    if (!slider) return;
+    slider.addEventListener('input', () => {
+      const v = parseFloat(slider.value);
+      STATE.sim[key] = v;
+      valEl.textContent = kind === 'pct' ? fmtPct1.format(v) : kind === 'usd' ? usd(v) : kind === 'bps' ? `${v} bps` : v;
+      updateTab3();
+    });
+  };
+  bind('sim3-vol', 'shipperVolume', 'usd');
+  bind('sim3-growth', 'shipperGrowth', 'pct');
+  bind('sim3-rail', 'railShift', 'pct');
+  bind('sim3-tier', 'pricingTierBps', 'bps');
+  document.querySelectorAll('.sim-preset-3').forEach((btn) => {
+    btn.addEventListener('click', () => applyTab3Preset(btn.dataset.scenario));
+  });
+}
+
+function applyTab3Preset(which) {
+  const map = {
+    base:   { vol: 23_100_000, growth: 0.05, rail: 0.20, tier: 10, stress: false },
+    full:   { vol: 28_000_000, growth: 0.15, rail: 0.45, tier: 9,  stress: false },
+    stress: { vol: 19_000_000, growth: -0.18, rail: 0.10, tier: 12, stress: true },
+  };
+  const p = map[which]; if (!p) return;
+  STATE.sim.shipperVolume = p.vol; STATE.sim.shipperGrowth = p.growth;
+  STATE.sim.railShift = p.rail; STATE.sim.pricingTierBps = p.tier; STATE.sim.stress = p.stress;
+  // Update sliders visually
+  document.getElementById('sim3-vol').value = p.vol;   document.getElementById('sim3-vol-val').textContent = usd(p.vol);
+  document.getElementById('sim3-growth').value = p.growth; document.getElementById('sim3-growth-val').textContent = fmtPct1.format(p.growth);
+  document.getElementById('sim3-rail').value = p.rail; document.getElementById('sim3-rail-val').textContent = fmtPct1.format(p.rail);
+  document.getElementById('sim3-tier').value = p.tier; document.getElementById('sim3-tier-val').textContent = `${p.tier} bps`;
+  updateTab3();
+}
+
+function updateTab3() {
+  const s = STATE.sim;
+  const stressMult = s.stress ? 0.82 : 1;
+  const volume = s.shipperVolume * (1 + s.shipperGrowth) * stressMult;
+  const avg = CONFIG.payments.avgInboundTicket;
+
+  // Render 4 pricing model cards
+  const grid = document.getElementById('pricing-grid');
+  if (grid) {
+    grid.innerHTML = CONFIG.pricingModels.map((m) => {
+      const cost = priceCost(m, volume, avg, s.pricingTierBps);
+      const bankRev = bankRevFromModel(m, volume, s.pricingTierBps);
+      const yieldPct = cost / volume;
+      const isRec = m.recommended;
+      const useCase = m.id === 'ip' ? 'Recommended · L3-eligible freight books'
+                    : m.id === 'bl' ? 'Acceptable · simplicity only'
+                    : m.id === 'fl' ? 'Avoid · expensive at $3,840 avg ticket'
+                    : 'Secondary · very-high-volume mature buyers';
+      return `
+        <div class="border ${isRec ? 'border-emerald-500/60' : 'hairline-strong'} rounded-lg p-5" ${isRec ? 'style="background: linear-gradient(180deg, rgba(16,185,129,0.06), transparent 70%);"' : ''}>
+          <div class="flex items-start justify-between">
+            <div class="eyebrow ${isRec ? 'eyebrow-accent' : ''}">${m.name}</div>
+            ${isRec ? '<span class="text-[10px] uppercase tracking-widest text-emerald-300">Recommended</span>' : ''}
+          </div>
+          <div class="mt-3 text-[12px] text-[var(--text-dim)] font-mono">${m.id === 'ip' ? `IC + ${s.pricingTierBps} bps + $${m.authFee.toFixed(2)}` : m.id === 'ent' ? `IC + ${m.bps} bps + $${m.authFee.toFixed(2)} · ${m.rebateBps} bps rebate > $${(m.rebateThreshold/1_000_000).toFixed(0)}M` : m.id === 'fl' ? `${fmtPct2.format(m.blended)} + $${m.authFee.toFixed(2)}` : fmtPct2.format(m.blended)}</div>
+          <div class="mt-4 space-y-1.5 text-[12.5px]">
+            <div class="flex justify-between"><span class="text-[var(--text-dim)]">Merchant cost</span><span class="num text-slate-100">${usd(cost)}</span></div>
+            <div class="flex justify-between"><span class="text-[var(--text-dim)]">Bank revenue</span><span class="num text-emerald-300">${usd(bankRev)}</span></div>
+            <div class="flex justify-between"><span class="text-[var(--text-dim)]">Net yield</span><span class="num text-slate-100">${fmtPct2.format(yieldPct)}</span></div>
+          </div>
+          <div class="mt-4 pt-3 border-t hairline text-[11px] text-[var(--text-mute)] leading-snug">${useCase}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Live outputs — use recommended model
+  const ip = CONFIG.pricingModels.find((m) => m.id === 'ip');
+  const cost = priceCost(ip, volume, avg, s.pricingTierBps);
+  const bankRev = bankRevFromModel(ip, volume, s.pricingTierBps);
+  document.getElementById('tab3-merchant-cost').textContent = usd(cost);
+  document.getElementById('tab3-bank-rev').textContent = usd(bankRev);
+  document.getElementById('tab3-yield').textContent = fmtPct2.format(cost / volume);
+  document.getElementById('tab3-tier').textContent = `IC + ${s.pricingTierBps} bps`;
+}
+/* -------- Tab 4 — Rail Migration Model -------- */
+function renderTab4() {
+  const el = document.querySelector('[data-panel="4"]');
+  const P = CONFIG.payments;
+
+  const annualCostCurrent = computeRailCost(P.inboundVolume, P.inboundMixCurrent, P.avgInboundTicket, P.railProfile)
+                          + computeRailCost(P.outboundVolume, P.outboundMixCurrent, P.avgOutboundPayout, P.railProfile);
+  const annualCostTarget  = computeRailCost(P.inboundVolume, P.inboundMixTarget,  P.avgInboundTicket, P.railProfile)
+                          + computeRailCost(P.outboundVolume, P.outboundMixTarget, P.avgOutboundPayout, P.railProfile);
+  const savingsLow  = Math.round((annualCostCurrent - annualCostTarget) * 0.6);
+  const savingsHigh = Math.round((annualCostCurrent - annualCostTarget) * 1.0);
+  const paybackLow  = P.migrationCostOneTime / savingsHigh;
+  const paybackHigh = P.migrationCostOneTime / savingsLow;
+
+  el.innerHTML = `
+    ${tabHeading('Rail migration · modeled', 'Inbound and outbound rail migration', 4)}
+
+    <div class="mb-6 border-l-2 border-sky-400/60 pl-4 py-1 max-w-4xl">
+      <div class="text-[12.5px] text-[var(--text-mute)] leading-relaxed">
+        Migration percentages reflect opportunity sets, not forecasts. Pace depends on counterparty bank RTP and FedNow
+        participation, request-for-payment workflow implementation, and carrier preference for pay-speed vs.
+        pay-certainty.
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Inbound rail -->
+      <div class="border hairline rounded-lg p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="eyebrow eyebrow-sky">Inbound · Shipper receipts</div>
+            <div class="mt-1 text-[13px] text-slate-100 num">${usd(P.inboundVolume)} annual</div>
+          </div>
+          <div class="eyebrow text-[var(--text-dim)]">24-mo opportunity</div>
+        </div>
+        ${renderRailStack(P.inboundMixCurrent, P.inboundMixTarget)}
+      </div>
+      <!-- Outbound rail -->
+      <div class="border hairline rounded-lg p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="eyebrow eyebrow-violet">Outbound · Carrier payouts</div>
+            <div class="mt-1 text-[13px] text-slate-100 num">${usd(P.outboundVolume)} annual</div>
+          </div>
+          <div class="eyebrow text-[var(--text-dim)]">24-mo opportunity</div>
+        </div>
+        ${renderRailStack(P.outboundMixCurrent, P.outboundMixTarget)}
+      </div>
+    </div>
+
+    <!-- Per-rail profile table -->
+    <div class="border hairline rounded-lg p-6 mb-6">
+      <div class="eyebrow mb-4">Per-rail profile · cost · speed · finality · use case</div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12.5px]">
+          <thead>
+            <tr class="eyebrow text-left border-b hairline-strong">
+              <th class="pb-2.5 pr-4 font-medium">Rail</th>
+              <th class="pb-2.5 pr-4 font-medium text-right">All-in merchant cost per transaction (blended)</th>
+              <th class="pb-2.5 pr-4 font-medium">Speed</th>
+              <th class="pb-2.5 pr-4 font-medium">Finality</th>
+              <th class="pb-2.5 font-medium">Typical Northstar use case</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.entries(P.railProfile).map(([rail, r]) => `
+              <tr class="border-b hairline">
+                <td class="py-2.5 pr-4 text-slate-100">${rail}</td>
+                <td class="py-2.5 pr-4 text-right num ${r.cost > 10 ? 'text-[var(--crit)]' : r.cost > 2 ? 'text-[var(--warn)]' : 'text-emerald-300'}">${r.cost < 1 ? '$' + r.cost.toFixed(2) : '$' + r.cost.toFixed(2)}</td>
+                <td class="py-2.5 pr-4 text-[var(--text-mute)]">${r.speed}</td>
+                <td class="py-2.5 pr-4 text-[var(--text-mute)]">${r.finality}</td>
+                <td class="py-2.5 text-[var(--text-mute)]">${r.use}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4 pt-4 border-t hairline text-[11px] text-[var(--text-dim)] leading-relaxed max-w-4xl space-y-2">
+        <div>Values reflect blended merchant-facing cost including bank margin, processing fees, and network assessments. Wholesale bank costs are lower; difference is bank net revenue.</div>
+        <div>Push-to-card expedited payouts settle in minutes via Visa Direct or Mastercard Send. Carriers accept a premium on fee for speed. Higher revenue per transaction than ACH but lower adoption ceiling.</div>
+      </div>
+    </div>
+
+    <!-- Savings summary -->
+    <div class="border hairline-strong rounded-lg p-6 mb-6 grid grid-cols-1 md:grid-cols-4 gap-6" style="background: linear-gradient(90deg, rgba(16,185,129,0.06), transparent 60%);">
+      <div>
+        <div class="eyebrow">Annual savings range</div>
+        <div class="mt-2 num text-2xl text-emerald-300 font-light leading-none">${usd(savingsLow)} – ${usd(savingsHigh)}</div>
+        <div class="text-[11px] text-[var(--text-dim)] mt-1">realization range based on adoption pace</div>
+      </div>
+      <div>
+        <div class="eyebrow">One-time migration cost</div>
+        <div class="mt-2 num text-2xl text-slate-50 font-light leading-none">${usd(P.migrationCostOneTime)}</div>
+        <div class="text-[11px] text-[var(--text-dim)] mt-1">RfP workflow, TMS integration, carrier onboarding</div>
+      </div>
+      <div>
+        <div class="eyebrow">Payback period</div>
+        <div class="mt-2 num text-2xl text-slate-50 font-light leading-none">${paybackLow.toFixed(1)} – ${paybackHigh.toFixed(1)} yrs</div>
+        <div class="text-[11px] text-[var(--text-dim)] mt-1">range corresponds to savings range</div>
+      </div>
+      <div>
+        <div class="eyebrow">Speed improvement</div>
+        <div class="mt-2 num text-2xl text-sky-400 font-light leading-none">1–3d → instant</div>
+        <div class="text-[11px] text-[var(--text-dim)] mt-1">on RTP / FedNow-routed slices</div>
+      </div>
+    </div>
+
+    <div class="text-[11.5px] text-[var(--text-mute)] leading-relaxed max-w-5xl border-l hairline-strong pl-4">
+      <span class="eyebrow mr-1.5">Note</span>
+      RTP and FedNow are ISO 20022-native 24/7/365 rails. Freight brokerage is a high-value use case: shippers want
+      predictable settlement, carriers want fast payment. Migration pace is constrained by the counterparty side of
+      each rail. Outbound FedNow adoption depends on the carrier's receiving-bank participation; inbound RTP depends
+      on the shipper's originating bank.
+    </div>
+  `;
+}
+
+function computeRailCost(volume, mix, avgTicket, profile) {
+  let cost = 0;
+  Object.entries(mix).forEach(([rail, share]) => {
+    const slice = volume * share;
+    const txCount = slice / avgTicket;
+    const r = profile[rail];
+    if (!r) return;
+    // Most rails are per-tx flat fee; cards are percentage
+    if (rail === 'Card' || rail === 'Check') {
+      cost += slice * (r.cost / 100);
+    } else {
+      cost += txCount * r.cost;
+    }
+  });
+  return cost;
+}
+
+function renderRailStack(current, target) {
+  const railColor = {
+    ACH: '#10b981', 'Same-day ACH': '#10b981', Card: '#a78bfa', 'Virtual card / push-to-card': '#a78bfa',
+    PBB: '#38bdf8', RTP: '#38bdf8', FedNow: '#38bdf8', Wire: '#fbbf24', Check: '#fb7185', Factoring: '#fb7185',
+  };
+  const row = (label, mix) => `
+    <div>
+      <div class="flex justify-between items-baseline mb-1.5">
+        <div class="eyebrow text-[var(--text-dim)]">${label}</div>
+        <div class="text-[10px] text-[var(--text-dim)] num">${Object.keys(mix).length} rails</div>
+      </div>
+      <div class="flex h-6 rounded overflow-hidden border hairline-strong">
+        ${Object.entries(mix).map(([r, s]) => `
+          <div title="${r} ${fmtPct1.format(s)}" style="width: ${s * 100}%; background: ${railColor[r] || '#5b79ac'}; opacity: 0.85;"></div>
+        `).join('')}
+      </div>
+      <div class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1 text-[10.5px]">
+        ${Object.entries(mix).map(([r, s]) => `
+          <div class="flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-sm shrink-0" style="background: ${railColor[r] || '#5b79ac'};"></span>
+            <span class="text-[var(--text-mute)] truncate">${r}</span>
+            <span class="num text-slate-100 ml-auto">${fmtPct1.format(s)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  return `
+    <div class="space-y-4">
+      ${row('Current mix', current)}
+      ${row('24-month opportunity set', target)}
+    </div>
+  `;
+}
+/* -------- Tab 5 — Revenue Capture Waterfall + Bank Revenue Build -------- */
+function renderTab5() {
+  const el = document.querySelector('[data-panel="5"]');
+  const c = CONFIG.capture;
+  const br = CONFIG.bankRevenue;
+  const deposits = STATE.accounts.filter((a) => a.type === 'depository').reduce((s, a) => s + a.balance, 0);
+
+  // Bank revenue build
+  const depositNII       = Math.round(deposits * br.depositNII);
+  const ablInterest      = Math.round(br.ablOutstanding * (br.ablNetMarginBps / 10_000));
+  const interchangeShare = Math.round(CONFIG.payments.cardAddressableInbound * (br.interchangeShareBps / 10_000));
+  const treasuryFee      = br.treasuryFeeIncome;
+  const cardRebate       = br.cardRebate;
+  const totalBankRev     = depositNII + ablInterest + interchangeShare + cardRebate + treasuryFee;
+
+  el.innerHTML = `
+    ${tabHeading('Capture · illustrative', 'Revenue capture waterfall', 5)}
+
+    <!-- Opening copy -->
+    <div class="mb-6 text-[13.5px] text-[var(--text-mute)] leading-relaxed max-w-5xl border-l-2 border-emerald-500/60 pl-4">
+      Start from <span class="num text-slate-100">${usd(CONFIG.payments.inboundVolume)}</span> gross inbound volume.
+      Card-addressable portion is <span class="num text-slate-100">${usd(c.base)}</span>
+      (${fmtPct1.format(c.base / CONFIG.payments.inboundVolume)} shipper card mix). Waterfall calculations apply to the
+      card-addressable base.
+    </div>
+
+    <!-- Leakage vs capture bridge -->
+    <div class="mb-6 border hairline rounded-lg p-5">
+      <div class="eyebrow eyebrow-amber">Leakage vs capture</div>
+      <div class="mt-2 text-[12.5px] text-[var(--text-mute)] leading-relaxed max-w-5xl">
+        Tab 2 scorecard identifies <span class="num text-slate-100">$176,900</span> in operational leakage across eight metrics. Tab 5 waterfall captures <span class="num text-slate-100">$386,000</span> total. The delta is direct rate compression on card-addressable volume (<span class="num text-slate-100">$200,970</span> at <span class="num">2.65%</span> → <span class="num">1.78%</span>), which is a pricing architecture shift, not an operational fix. Operational + pricing = <span class="num text-slate-100">$377,870</span> core. Ancillary stacking (L3 overlap, tokenization, auth lift, RTP migration) adds <span class="num text-slate-100">$8,130</span> to reach <span class="num text-emerald-300">$386,000</span>.
+      </div>
+    </div>
+
+    <!-- Waterfall chart -->
+    <div class="border hairline rounded-lg p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="eyebrow">Gross-to-net compression · card-addressable base</div>
+          <div class="mt-1 text-[12px] text-[var(--text-mute)]">
+            Starting cost: <span class="num text-slate-100">${fmtPct2.format(c.currentBlended)}</span> blended →
+            optimized: <span class="num text-emerald-300">${fmtPct2.format(c.optimizedBlended)}</span> blended
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="eyebrow">Annual capture</div>
+          <div class="mt-1 display text-3xl num text-emerald-300 font-light leading-none">${usd(c.total)}</div>
+        </div>
+      </div>
+      <div style="height: 360px"><canvas id="chart-tab5-waterfall"></canvas></div>
+
+      <!-- Arithmetic footnote -->
+      <div class="mt-5 pt-5 border-t hairline">
+        <div class="eyebrow mb-3">Arithmetic</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-[12px] text-[var(--text-mute)]">
+          ${c.components.map((comp) => `
+            <div class="flex items-baseline justify-between border-b hairline py-1.5">
+              <div>
+                <span class="text-slate-100">${comp.label}</span>
+                <span class="text-[10.5px] text-[var(--text-dim)] ml-2 font-mono">${comp.note}</span>
+              </div>
+              <div class="num text-emerald-300">${usd(comp.value)}</div>
+            </div>
+          `).join('')}
+          <div class="flex items-baseline justify-between border-b hairline-strong py-2 md:col-span-2">
+            <div class="text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">Total annual capture</div>
+            <div class="num text-emerald-300 font-semibold text-base">${usd(c.total)}</div>
+          </div>
+        </div>
+        <div class="mt-4 text-[12px] text-[var(--text-mute)] leading-relaxed max-w-4xl">
+          Gross compression plus ancillary improvements total approximately <span class="num text-slate-100">$411,180</span> on the <span class="num text-slate-100">$23.1M</span> card-addressable base. Net of estimated <span class="num text-slate-100">$25,180</span> implementation cost: <span class="num text-emerald-300">$386,000</span> year-one capture.
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Revenue Build -->
+    <div class="border hairline-strong rounded-lg p-6 mb-6" style="background: radial-gradient(800px 400px at 15% 20%, rgba(16,185,129,0.07), transparent 60%);">
+      <div class="flex items-start justify-between mb-5 flex-wrap gap-4">
+        <div>
+          <div class="eyebrow eyebrow-accent">Bank revenue build · annual (illustrative)</div>
+          <h3 class="mt-2 text-2xl text-slate-50 display" style="font-variation-settings: 'opsz' 48; font-weight: 400;">How the relationship flows to the bank</h3>
+          <p class="mt-2 text-[12.5px] text-[var(--text-mute)] max-w-3xl leading-relaxed">
+            This is the bank's P&amp;L, not the merchant's savings. It is how the relationship flows across desks:
+            NII to the balance sheet, interest to commercial lending, interchange share to the issuing line,
+            fee income to treasury management.
+          </p>
+        </div>
+        <div class="text-right">
+          <div class="eyebrow">Steady-state · Y2+</div>
+          <div class="mt-1 display text-4xl num text-emerald-300 font-light leading-none">${usd(totalBankRev)}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[1.3fr,1fr] gap-6">
+        <table class="w-full text-[13px]">
+          <thead>
+            <tr class="eyebrow text-left border-b hairline-strong">
+              <th class="pb-3 pr-4 font-medium">Line</th>
+              <th class="pb-3 pr-4 font-medium">Desk</th>
+              <th class="pb-3 pr-4 font-medium">Mechanic</th>
+              <th class="pb-3 font-medium text-right">Annual</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b hairline">
+              <td class="py-3 pr-4 text-slate-100">Deposit NII</td>
+              <td class="py-3 pr-4"><span class="dot dot-sky mr-1.5"></span><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">Treasury</span></td>
+              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]"><span class="num">${fmtBps(br.depositNII * 10_000)}</span> blended spread on <span class="num">${usd(deposits)}</span> combined balances</td>
+              <td class="py-3 text-right num text-slate-50">${usd(depositNII)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-3 pr-4 text-slate-100">ABL revolver interest income</td>
+              <td class="py-3 pr-4"><span class="dot dot-violet mr-1.5"></span><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">Commercial</span></td>
+              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]">SOFR + <span class="num">${br.ablSofrSpreadBps} bps</span> stated on <span class="num">${usd(br.ablOutstanding)}</span> outstanding · bank net margin <span class="num">${fmtBps(br.ablNetMarginBps)}</span></td>
+              <td class="py-3 text-right num text-slate-50">${usd(ablInterest)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-3 pr-4 text-slate-100">Interchange share</td>
+              <td class="py-3 pr-4"><span class="dot dot-ok mr-1.5"></span><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">Payments</span></td>
+              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]"><span class="num">${fmtBps(br.interchangeShareBps)}</span> share of interchange on <span class="num">${usd(CONFIG.payments.cardAddressableInbound)}</span> shipper card volume</td>
+              <td class="py-3 text-right num text-slate-50">${usd(interchangeShare)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-3 pr-4 text-slate-100">Commercial card rebate program</td>
+              <td class="py-3 pr-4"><span class="dot dot-ok mr-1.5"></span><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">Payments</span></td>
+              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]"><span class="num">${fmtBps(br.cardRebateBps)}</span> share on estimated ~<span class="num">${usd(br.cardRebateVolume)}</span> annual corporate card spend (T&amp;E + operations)</td>
+              <td class="py-3 text-right num text-slate-50">${usd(cardRebate)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-3 pr-4 text-slate-100">Treasury fee income</td>
+              <td class="py-3 pr-4"><span class="dot dot-sky mr-1.5"></span><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">Treasury</span></td>
+              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]">ZBA · positive pay · lockbox · controlled disbursement · ACH origination · FX for US–MX freight</td>
+              <td class="py-3 text-right num text-slate-50">${usd(treasuryFee)}</td>
+            </tr>
+            <tr>
+              <td colspan="3" class="pt-3.5 text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">Steady-state annual revenue to bank (Year 2+)</td>
+              <td class="pt-3.5 text-right num text-emerald-300 font-semibold text-lg">${usd(totalBankRev)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="relative">
+          <div style="height: 260px"><canvas id="chart-tab5-bankrev"></canvas></div>
+        </div>
+      </div>
+      <div class="mt-3 text-[11.5px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
+        Year 1 partial capture of ~${usd(550_000)} reflects ramping onboarding across the four pillars.
+      </div>
+
+      <div class="mt-6 pt-5 border-t hairline">
+        <div class="flex items-baseline justify-between flex-wrap gap-3 mb-3">
+          <div class="eyebrow eyebrow-accent">5-year relationship value build · illustrative</div>
+          <div class="text-[11px] text-[var(--text-dim)] uppercase tracking-wider">Cumulative ~$4.94M</div>
+        </div>
+        <table class="w-full text-[12.5px]">
+          <thead>
+            <tr class="eyebrow text-left border-b hairline-strong">
+              <th class="pb-2.5 pr-4 font-medium">Year</th>
+              <th class="pb-2.5 pr-4 font-medium">Driver</th>
+              <th class="pb-2.5 font-medium text-right">Bank revenue (annual)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b hairline">
+              <td class="py-2 pr-4 text-slate-100">Year 1</td>
+              <td class="py-2 pr-4 text-[var(--text-mute)]">Partial-year capture. ABL onboarded month 2. Treasury products onboarded months 3–6. Card acceptance migrated months 4–7. Average wallet share across Year 1 ~60% of Year-2 steady state.</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(550_000)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-2 pr-4 text-slate-100">Year 2</td>
+              <td class="py-2 pr-4 text-[var(--text-mute)]">Steady-state capture at 78% wallet share target. Full-year fee run-rate. Card volume at baseline.</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(900_000)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-2 pr-4 text-slate-100">Year 3</td>
+              <td class="py-2 pr-4 text-[var(--text-mute)]">Fee expansion · ABL utilization uplift · card rebate volume scaling (~$40K).</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(1_050_000)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-2 pr-4 text-slate-100">Year 4</td>
+              <td class="py-2 pr-4 text-[var(--text-mute)]">Baseline volume growth ~10% + modest fee ramp.</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(1_160_000)}</td>
+            </tr>
+            <tr class="border-b hairline">
+              <td class="py-2 pr-4 text-slate-100">Year 5</td>
+              <td class="py-2 pr-4 text-[var(--text-mute)]">Baseline volume growth ~10%.</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(1_280_000)}</td>
+            </tr>
+            <tr>
+              <td colspan="2" class="pt-3 text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">5-year cumulative (illustrative)</td>
+              <td class="pt-3 text-right num text-emerald-300 font-semibold text-base">~${usd(4_940_000)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="mt-3 text-[11px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
+          Year 1 reflects partial-capture economics as treasury, credit, and card acceptance onboard across months 2–7. Years 3–5 assume blended volume growth of ~10% annually with fee expansion, card rebate volume scaling, and ABL utilization uplift. Illustrative multi-year trajectory, not a forecast.
+        </div>
+      </div>
+    </div>
+
+    <div class="text-[11px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
+      <span class="eyebrow mr-1.5">Reconciliation</span>
+      Direct compression: <span class="num text-[var(--text-mute)]">$23.1M × (2.65% − 1.78%) = $200,970</span>.
+      Additional contributions from L3 interchange qualification gain, tokenization downgrade avoidance,
+      auth improvement on lost transactions, and RTP migration on inbound ACH-to-RTP conversion bring the
+      total to <span class="num text-[var(--text-mute)]">$386,000</span>. Arithmetic reconciles in the table above.
+    </div>
+  `;
+}
+
+function buildTab5Charts() {
+  // Waterfall
+  destroyChart('tab5waterfall');
+  const ctxW = document.getElementById('chart-tab5-waterfall');
+  if (!ctxW) return;
+  const c = CONFIG.capture;
+  // Construct waterfall: start at 0, each component adds up, final = total
+  const labels = ['Start'].concat(c.components.map((x) => x.label)).concat(['Total capture']);
+  let running = 0;
+  const invisible = [0];
+  const visible = [0];
+  c.components.forEach((comp) => {
+    invisible.push(running);
+    visible.push(comp.value);
+    running += comp.value;
+  });
+  invisible.push(0);
+  visible.push(running);
+  const colors = ['#5b79ac']
+    .concat(['#10b981', '#34d399', '#22d3ee', '#a78bfa', '#38bdf8', '#10b981'])
+    .concat(['#34d399']);
+  STATE.charts.tab5waterfall = new Chart(ctxW, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '_base', data: invisible, backgroundColor: 'rgba(0,0,0,0)', borderWidth: 0, stack: 'a' },
+        { label: 'Value', data: visible,   backgroundColor: colors, borderRadius: 2, stack: 'a' },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+                 tooltip: { callbacks: { label: (ctx) => ctx.datasetIndex === 1 ? usd(ctx.parsed.y) : null,
+                                          filter: (item) => item.datasetIndex === 1 } } },
+      scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 35, minRotation: 0, font: { size: 10 } } },
+                y: { stacked: true, ticks: { callback: (v) => usd(v) } } },
+    },
+  });
+  STATE.charts.tab5waterfall.resize();
+
+  // Bank revenue horizontal stacked bar
+  destroyChart('tab5bankrev');
+  const ctxB = document.getElementById('chart-tab5-bankrev');
+  if (!ctxB) return;
+  const br = CONFIG.bankRevenue;
+  const deposits = STATE.accounts.filter((a) => a.type === 'depository').reduce((s, a) => s + a.balance, 0);
+  const depositNII       = deposits * br.depositNII;
+  const ablInterest      = br.ablOutstanding * (br.ablNetMarginBps / 10_000);
+  const interchangeShare = CONFIG.payments.cardAddressableInbound * (br.interchangeShareBps / 10_000);
+  const treasuryFee      = br.treasuryFeeIncome;
+  const cardRebate       = br.cardRebate;
+  STATE.charts.tab5bankrev = new Chart(ctxB, {
+    type: 'bar',
+    data: {
+      labels: ['Year 1'],
+      datasets: [
+        { label: 'Deposit NII',     data: [depositNII],       backgroundColor: '#38bdf8', borderRadius: 2 },
+        { label: 'ABL interest',    data: [ablInterest],      backgroundColor: '#a78bfa', borderRadius: 2 },
+        { label: 'Interchange share', data: [interchangeShare], backgroundColor: '#10b981', borderRadius: 2 },
+        { label: 'Card rebate',     data: [cardRebate],       backgroundColor: '#22d3ee', borderRadius: 2 },
+        { label: 'Treasury fees',   data: [treasuryFee],      backgroundColor: '#34d399', borderRadius: 2 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'rect' } },
+                 tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${usd(c.parsed.x)}` } } },
+      scales: { x: { stacked: true, ticks: { callback: (v) => usd(v) } }, y: { stacked: true, grid: { display: false } } },
+    },
+  });
+  STATE.charts.tab5bankrev.resize();
+}
+/* -------- Tab 6 — Relationship Context + Solvency Stress Test -------- */
+function renderTab6() {
+  const el = document.querySelector('[data-panel="6"]');
+  const deposits = STATE.accounts.filter((a) => a.type === 'depository').reduce((s, a) => s + a.balance, 0);
+
+  // Covenant test values (indicative)
+  const fccr = 1.42;         // fixed-charge coverage
+  const leverage = 2.35;     // total debt / EBITDA
+  const availability = 8_200_000; // available under ABL
+  const borrowingBase = 'AR-only';
+
+  const covenantRow = (key, current, threshold, direction, fmt, isGood) => `
+    <div class="border hairline rounded-sm px-4 py-3">
+      <div class="flex items-center justify-between">
+        <div class="text-[12px] text-[var(--text)]">${key}</div>
+        <span class="dot ${isGood ? 'dot-ok' : 'dot-warn'}"></span>
+      </div>
+      <div class="mt-1.5 flex items-baseline justify-between">
+        <div class="num text-[16px] ${isGood ? 'text-emerald-300' : 'text-[var(--warn)]'} font-light">${fmt(current)}</div>
+        <div class="text-[10px] text-[var(--text-dim)] num">vs ${direction === 'min' ? '≥' : '≤'} ${fmt(threshold)}</div>
+      </div>
+    </div>
+  `;
+
+  const scenarios = [
+    { id: 'vol',    label: 'Shipper volume −20%',           impact: 'Borrowing base −18% ($7.2M avail. compression)', fccrImpact: 1.28, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
+      detail: 'Freight recession scenario. AR shrinks proportionally; 80% advance rate still clears minimum availability covenant with ~$3.2M headroom.' },
+    { id: 'sofr',   label: 'SOFR +200 bps',                 impact: 'Interest expense +$800K annually',               fccrImpact: 1.19, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
+      detail: 'Rate shock on $40M ABL outstanding. FCCR compresses to 1.19× (above 1.15× covenant). Re-price trigger activates at +250 bps.' },
+    { id: 'carrier',label: 'Carrier rate pressure +15%',    impact: 'Gross margin −240 bps · DSCR to 1.31×',         fccrImpact: 1.31, verdict: 'Holds under base assumptions',   verdictColor: 'ok',
+      detail: 'Carrier capacity cost pass-through usually lags shipper rate adjustments 45–60 days. Short-term margin compression; recovers inside one quarter.' },
+    { id: 'shipper',label: 'Top-10 shipper loss (−20% rev.)', impact: 'HHI +420 points · availability −$1.8M · FCCR 1.22×', fccrImpact: 1.22, verdict: 'Would trigger repricing under base assumptions', verdictColor: 'warn',
+      detail: 'Concentration shock. AR aging worsens as replacement shippers onboard. Pricing re-opener clause triggered; 10–15 bps spread widening.' },
+  ];
+
+  el.innerHTML = `
+    ${tabHeading('Relationship · supporting', 'Relationship context & solvency stress', 6)}
+
+    <div class="mb-6 border-l-2 border-emerald-500/60 pl-4 py-1 max-w-4xl">
+      <div class="text-[13px] text-[var(--text-mute)] leading-relaxed">
+        Pricing should reflect the full relationship. A 3PL with disciplined reserves, covenant headroom, and
+        cycle resilience warrants sharper pricing than processing volume alone suggests.
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- A: Credit view -->
+      <div class="border hairline rounded-lg p-5">
+        <div class="flex items-center justify-between">
+          <div class="eyebrow eyebrow-violet">A · Credit view</div>
+          <span class="text-[10px] uppercase tracking-widest text-[var(--text-dim)]">indicative</span>
+        </div>
+        <div class="mt-4 flex items-baseline gap-3">
+          <div class="display text-4xl num text-slate-50 font-light leading-none">${CONFIG.scoring.indicativeScore}</div>
+          <div>
+            <div class="text-[13px] text-emerald-300 font-medium">${CONFIG.scoring.indicativeGrade} <span class="text-[var(--text-dim)] text-[11px]">(illustrative)</span></div>
+            <div class="text-[11px] text-[var(--text-mute)]">Underwriting score · ABL renewal</div>
+          </div>
+        </div>
+        <div class="mt-5 space-y-2">
+          ${covenantRow('Min FCCR',              fccr,         1.15, 'min', (v) => fmtNum2.format(v) + '×', fccr >= 1.15)}
+          ${covenantRow('Max leverage',          leverage,     3.00, 'max', (v) => fmtNum2.format(v) + '×', leverage <= 3.00)}
+          ${covenantRow('Min availability',      availability, 5_000_000, 'min', (v) => usd(v), availability >= 5_000_000)}
+        </div>
+        <div class="mt-4 pt-3 border-t hairline text-[10.5px] text-[var(--text-mute)] leading-snug">
+          Borrowing base: <span class="text-slate-100">AR-only</span> (standard for 3PL; inventory and equipment excluded).
+        </div>
+      </div>
+
+      <!-- B: Treasury view -->
+      <div class="border hairline rounded-lg p-5">
+        <div class="flex items-center justify-between">
+          <div class="eyebrow eyebrow-sky">B · Treasury view</div>
+          <span class="text-[10px] uppercase tracking-widest text-[var(--text-dim)]">indicative</span>
+        </div>
+        <div class="mt-4 space-y-2 text-[12.5px]">
+          ${STATE.accounts.filter((a) => a.type === 'depository').map((a) => `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="dot dot-sky shrink-0"></span>
+                <span class="text-[var(--text)] truncate">${a.name}</span>
+              </div>
+              <span class="num text-slate-100">${usd(a.balance)}</span>
+            </div>
+          `).join('')}
+          <div class="flex items-center justify-between pt-2 border-t hairline">
+            <span class="text-[var(--text-dim)] uppercase tracking-widest text-[10px]">Combined</span>
+            <span class="num text-emerald-300">${usd(deposits)}</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t hairline text-[11px] text-[var(--text-mute)] leading-relaxed">
+          Idle float of <span class="num text-slate-100">$1.18M</span> in money market.
+          Additional <span class="num text-slate-100">$420K</span> sweepable from operating checking.
+          Lockbox latency compresses borrowing base availability <span class="num text-slate-100">$180K</span> daily.
+        </div>
+      </div>
+
+      <!-- C: Cash flow view -->
+      <div class="border hairline rounded-lg p-5">
+        <div class="flex items-center justify-between">
+          <div class="eyebrow eyebrow-accent">C · Cash flow view</div>
+          <span class="text-[10px] uppercase tracking-widest text-[var(--text-dim)]">indicative</span>
+        </div>
+        <div class="mt-4 space-y-3 text-[12.5px]">
+          <div class="flex justify-between items-baseline">
+            <span class="text-[var(--text-dim)]">DSCR</span>
+            <span class="num text-slate-100 text-[15px]">${fmtNum2.format(fccr)}×</span>
+          </div>
+          <div class="flex justify-between items-baseline">
+            <span class="text-[var(--text-dim)]">Days cash on hand</span>
+            <span class="num text-slate-100 text-[15px]">22 d</span>
+          </div>
+          <div class="flex justify-between items-baseline">
+            <span class="text-[var(--text-dim)]">Shipper HHI (top 10)</span>
+            <span class="num text-slate-100 text-[15px]">1,338</span>
+          </div>
+          <div class="flex justify-between items-baseline">
+            <span class="text-[var(--text-dim)]">Carrier concentration (top 50)</span>
+            <span class="num text-slate-100 text-[15px]">${fmtPct1.format(0.39)}</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t hairline text-[11px] text-[var(--text-mute)] leading-relaxed">
+          Freight is cyclical; concentration risk on both sides of the book. 3,200+ carrier network provides
+          redundancy; 680+ active shipper base diversifies revenue.
+        </div>
+      </div>
+    </div>
+
+    <!-- D: Solvency Stress Test -->
+    <div class="border hairline rounded-lg p-6 mb-6">
+      <div class="mb-4">
+        <div class="eyebrow eyebrow-amber">D · Solvency stress test</div>
+        <p class="mt-2 text-[12.5px] text-[var(--text-mute)] leading-relaxed max-w-4xl">
+          Scenario outcomes below are deterministic model outputs on illustrative assumptions, not underwriting conclusions. A production credit review would run these against a live financial statement set and stochastic inputs.
+        </p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${scenarios.map((sc) => `
+          <div class="border hairline rounded-lg p-4">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-[13px] text-slate-100 font-medium">${sc.label}</div>
+                <div class="mt-1 text-[11px] text-[var(--text-mute)]">${sc.impact}</div>
+              </div>
+              <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm border ${sc.verdictColor === 'ok' ? 'text-emerald-300 border-emerald-500/50 bg-emerald-500/10' : sc.verdictColor === 'warn' ? 'text-amber-300 border-amber-500/50 bg-amber-500/10' : 'text-rose-300 border-rose-500/50 bg-rose-500/10'}">${sc.verdict}</span>
+            </div>
+            <div class="mt-3 flex items-baseline gap-3">
+              <div class="eyebrow">Stressed FCCR</div>
+              <div class="num ${sc.fccrImpact >= 1.15 ? 'text-emerald-300' : 'text-[var(--crit)]'} text-lg font-light">${fmtNum2.format(sc.fccrImpact)}×</div>
+            </div>
+            <div class="mt-3 pt-3 border-t hairline text-[11px] text-[var(--text-mute)] leading-relaxed">${sc.detail}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="mt-5 pt-4 border-t hairline text-[12px] text-[var(--text-mute)] leading-relaxed max-w-5xl">
+        <span class="eyebrow mr-1.5">Why stress test pricing</span>
+        Merchant services pricing commitments extend 3–5 years. Freight is cyclical. Stress testing the merchant
+        is due diligence, not risk theater. A 3PL that clears these four scenarios earns our sharpest pricing.
+      </div>
+    </div>
+
+    <!-- Footnotes -->
+    <div class="mt-4 pt-4 border-t hairline">
+      <div class="eyebrow mb-3">Footnotes · Tab 6</div>
+      <ol class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[11px] text-[var(--text-mute)] leading-relaxed list-decimal ml-4 marker:text-[var(--text-dim)]">
+        <li>FCCR (fixed-charge coverage ratio) = EBITDA + rent − capex − taxes − distributions, divided by interest + scheduled principal + rent.</li>
+        <li>Borrowing base is AR-only; inventory and equipment are not eligible collateral for a 3PL ABL.</li>
+        <li>Stress scenarios hold EBITDA ex-rate-shock constant except where explicitly noted; real-world sensitivities will combine.</li>
+        <li>Re-price trigger is a covenant in the ABL facility documents that opens pricing on defined breach events.</li>
+      </ol>
+    </div>
+  `;
+}
+/* -------- Tab 7 — Merchant Pricing Proposal (printable) -------- */
+function renderTab7() {
+  const el = document.querySelector('[data-panel="7"]');
+  if (!el) return;
+  const p = CONFIG.persona;
+  const c = CONFIG.capture;
+  const br = CONFIG.bankRevenue;
+  const today = fmtDaily.format(new Date());
+  const deposits = STATE.accounts.filter((a) => a.type === 'depository').reduce((s, a) => s + a.balance, 0);
+  const depositNII       = Math.round(deposits * br.depositNII);
+  const ablInterest      = Math.round(br.ablOutstanding * (br.ablNetMarginBps / 10_000));
+  const interchangeShare = Math.round(CONFIG.payments.cardAddressableInbound * (br.interchangeShareBps / 10_000));
+  const treasuryFee      = br.treasuryFeeIncome;
+  const cardRebate       = br.cardRebate;
+  const totalBankRev     = depositNII + ablInterest + interchangeShare + cardRebate + treasuryFee;
+
+  el.innerHTML = `
+    <div class="print-hidden flex items-center justify-between mb-8">
+      <div>
+        <div class="eyebrow eyebrow-accent">Deliverable</div>
+        <h2 class="mt-2 text-3xl md:text-4xl text-slate-50 display" style="font-variation-settings: 'opsz' 72, 'SOFT' 30; font-weight: 400;">Merchant pricing proposal</h2>
+        <p class="mt-2 text-sm text-[var(--text-mute)]">${TABS[6].framing} · Print to PDF for client delivery.</p>
+      </div>
+      <button onclick="window.print()" class="inline-flex items-center gap-2 border hairline-strong text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 text-sm px-4 py-2.5 rounded-sm transition">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg>
+        <span class="eyebrow text-slate-200">Print / PDF</span>
+      </button>
+    </div>
+
+    <div class="bg-white text-slate-900 rounded-sm shadow-2xl max-w-[8.5in] mx-auto print:shadow-none print:rounded-none print:max-w-full print:mx-0" style="font-family: 'Source Serif Pro', 'Fraunces', Georgia, serif;">
+      <div class="px-10 md:px-14 pt-12 md:pt-16 pb-10 md:pb-14 print:p-0">
+
+        <!-- Letterhead -->
+        <div class="flex items-start justify-between pb-1">
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold">Merchant Pricing Proposal · Confidential</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase tracking-[0.16em] text-slate-500 font-sans">Prepared</div>
+            <div class="mt-0.5 text-[11px] text-slate-700 font-sans num">${today}</div>
+          </div>
+        </div>
+        <div class="mt-6 border-t-2 border-emerald-800"></div>
+
+        <h1 class="mt-8 text-4xl md:text-5xl font-normal text-slate-900 leading-[1.05]" style="font-family: 'Fraunces', Georgia, serif; font-variation-settings: 'opsz' 144, 'SOFT' 30; letter-spacing: -0.02em;">${p.name}</h1>
+        <div class="mt-3 text-sm text-slate-600 font-sans flex items-center gap-3 flex-wrap">
+          <span>Integrated Merchant + Treasury + Credit Proposal</span>
+          <span class="h-3 w-px bg-slate-300"></span>
+          <span class="uppercase tracking-[0.12em] text-[10px] text-emerald-700 font-semibold">Pricing · Capture · Relationship</span>
+        </div>
+        <div class="mt-2 text-[11.5px] text-slate-500 font-sans leading-relaxed">
+          <span class="uppercase tracking-[0.12em] text-[9px] text-slate-600 font-semibold mr-1">Coverage</span>
+          Middle Market Commercial Banking · Senior Vice President coverage tier · Semi-annual relationship review cadence.
+        </div>
+
+        <!-- 1. Merchant snapshot -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-12 mb-4">Merchant snapshot</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4 text-sm font-sans">
+          ${[
+            ['Industry',         'Asset-light freight broker · 3PL'],
+            ['Revenue',          usd(p.revenue), true],
+            ['Employees',        p.employees, true],
+            ['Founded',          p.founded, true],
+            ['Carriers',         p.carriers, true],
+            ['Active shippers',  p.shippers, true],
+            ['MCC',              p.mcc],
+            ['Headquarters',     p.headquarters],
+          ].map(([l, v, isNum]) => `
+            <div>
+              <div class="text-[9.5px] uppercase tracking-[0.12em] text-slate-500">${l}</div>
+              <div class="mt-0.5 text-slate-900 ${isNum ? 'num' : ''}">${v}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="mt-4 text-[12px] text-slate-700 font-sans">
+          Operating footprint: <span class="font-medium">Chicago HQ · Dallas · Atlanta · Newark</span>. Top-3 shipper origin
+          concentration <span class="num">${fmtPct1.format(CONFIG.geography.top3Concentration)}</span> · State-level HHI <span class="num">${CONFIG.geography.stateHHI.toLocaleString()}</span>.
+        </div>
+
+        <!-- 2. Recommended pricing model -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-12 mb-3">Recommended pricing model</h2>
+        <div class="border-l-4 border-emerald-700 pl-4">
+          <div class="text-[16px] font-semibold text-slate-900" style="font-family: 'Fraunces', Georgia, serif;">Interchange-plus · IC + 10 bps + $0.08 per authorization</div>
+          <p class="mt-2 text-[13px] text-slate-700 font-sans leading-relaxed">
+            Transparent pass-through pricing wins on Northstar's L3-eligible freight invoice book. Annual merchant cost
+            of approximately <span class="num font-medium">${usd(23_100_000 * 0.0178)}</span> on $23.1M card-addressable
+            volume — a blended <span class="num font-medium">1.78%</span> net yield versus a current ~2.65% blended rate.
+          </p>
+        </div>
+
+        <!-- 3. Supporting rationale -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3">Supporting rationale (operational metrics)</h2>
+        <ul class="text-[13px] text-slate-800 font-sans space-y-2 list-disc ml-5 marker:text-slate-400">
+          <li>STP rate at <span class="num">91.8%</span> against <span class="num">95.5%</span> benchmark — closing the gap recovers <span class="num">$50,500</span>/yr in invoice-to-cash exception cost.</li>
+          <li>Level 3 data penetration at <span class="num">14%</span> against <span class="num">65%</span> benchmark — material interchange qualification gain at $3,840 average shipper ticket worth <span class="num">$38,000</span>/yr.</li>
+          <li>Same-day ACH adoption on carrier payouts at <span class="num">54%</span> against <span class="num">85%</span> benchmark — competitive lever for carrier retention and pay-speed worth <span class="num">$14,500</span>/yr.</li>
+        </ul>
+
+        <!-- 4. Rail migration -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3">Rail migration recommendation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-[12.5px] font-sans">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Inbound (shipper receipts)</div>
+            <div class="mt-1 text-slate-700">Shift inbound mix from <span class="num">48% ACH / 34% card / 12% wire / 6% check</span> toward <span class="num">36% ACH / 28% card / 26% RTP / 8% wire / 2% check</span> over 24 months. RTP enables shipper-side request-for-payment workflows that compress DSO.</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Outbound (carrier payouts)</div>
+            <div class="mt-1 text-slate-700">Shift outbound mix from <span class="num">72% same-day ACH / 18% virtual card</span> toward <span class="num">48% same-day ACH / 14% virtual card / 32% FedNow</span> over 24 months. FedNow accelerates carrier payment speed without per-tx wire fees.</div>
+          </div>
+        </div>
+
+        <!-- 5. Annual merchant savings -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3 print-avoid-break">Projected annual merchant savings</h2>
+        <div class="grid grid-cols-3 gap-6 print-avoid-break">
+          <div class="border-l-4 border-emerald-700 pl-4">
+            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Total capture</div>
+            <div class="mt-1 num text-3xl print-accent" style="font-family: 'Fraunces', Georgia, serif; font-weight: 400;">${usd(c.total)}</div>
+            <div class="text-[11px] text-slate-600 mt-1">Direct compression + L3 + tokenization + auth lift + RTP migration</div>
+          </div>
+          <div class="border-l-4 border-slate-400 pl-4">
+            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Direct rate compression</div>
+            <div class="mt-1 num text-2xl text-slate-900" style="font-family: 'Fraunces', Georgia, serif; font-weight: 400;">${usd(200_970)}</div>
+            <div class="text-[11px] text-slate-600 mt-1">$23.1M × (2.65% − 1.78%)</div>
+          </div>
+          <div class="border-l-4 border-slate-400 pl-4">
+            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Operational uplift</div>
+            <div class="mt-1 num text-2xl text-slate-900" style="font-family: 'Fraunces', Georgia, serif; font-weight: 400;">${usd(c.total - 200_970)}</div>
+            <div class="text-[11px] text-slate-600 mt-1">L3, tokenization, auth, downgrade recovery, RTP migration</div>
+          </div>
+        </div>
+
+        <!-- 6. Bank revenue + 7. Relationship capture -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3 print-avoid-break">Projected annual bank revenue · relationship capture</h2>
+        <table class="w-full text-sm font-sans print-avoid-break">
+          <thead>
+            <tr class="border-b border-slate-400 text-[10px] uppercase tracking-[0.12em] text-slate-500 text-left">
+              <th class="pb-2.5 font-medium">Pillar</th>
+              <th class="pb-2.5 font-medium">Mechanic</th>
+              <th class="pb-2.5 font-medium text-right">Annual</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Treasury · Deposit NII</td><td class="py-2.5 text-slate-600">175 bps blended on ${usd(deposits)} combined balances</td><td class="py-2.5 text-right num text-slate-900">${usd(depositNII)}</td></tr>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Credit · ABL revolver interest</td><td class="py-2.5 text-slate-600">SOFR + 375 stated · 175 bps net margin on $40M</td><td class="py-2.5 text-right num text-slate-900">${usd(ablInterest)}</td></tr>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Interchange share</td><td class="py-2.5 text-slate-600">20 bps share on $23.1M shipper card volume</td><td class="py-2.5 text-right num text-slate-900">${usd(interchangeShare)}</td></tr>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Commercial card rebate program</td><td class="py-2.5 text-slate-600">10 bps share on estimated ~$2.5M annual corporate card spend (T&amp;E + operations)</td><td class="py-2.5 text-right num text-slate-900">${usd(cardRebate)}</td></tr>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Treasury · Fee income</td><td class="py-2.5 text-slate-600">ZBA, positive pay, lockbox, controlled disbursement, ACH origination, FX</td><td class="py-2.5 text-right num text-slate-900">${usd(treasuryFee)}</td></tr>
+            <tr><td colspan="2" class="pt-3.5 font-semibold text-slate-900 uppercase tracking-[0.06em] text-[11px]">Bank revenue to relationship (illustrative)</td><td class="pt-3.5 text-right text-[15px] print-accent font-medium" style="font-family: 'Fraunces', Georgia, serif;">$550K Year 1 ramping to ~$900K Year 2 steady state</td></tr>
+          </tbody>
+        </table>
+
+        <!-- 8. Implementation timeline -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3 print-avoid-break">Implementation timeline</h2>
+        <div class="grid grid-cols-3 gap-4 text-[12.5px] font-sans print-avoid-break">
+          <div class="border-l-4 border-emerald-700 pl-3"><div class="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold">Day 0–30</div><div class="mt-1 text-slate-800">Merchant onboarding, KYC/CDD, MIDs and gateway provisioning, L3 schema mapping with current TMS.</div></div>
+          <div class="border-l-4 border-emerald-700 pl-3"><div class="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold">Day 31–60</div><div class="mt-1 text-slate-800">Treasury structure (operating, sweep, escrow, payroll, tax) configured. Lockbox migration. ABL participation execution.</div></div>
+          <div class="border-l-4 border-emerald-700 pl-3"><div class="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold">Day 61–90</div><div class="mt-1 text-slate-800">Pilot RTP enrollment with top-10 shippers. FedNow rollout for top-tier carrier segment. First quarterly review.</div></div>
+        </div>
+
+        <!-- 9. Tax & Regulatory -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3 print-avoid-break">Tax &amp; regulatory considerations</h2>
+        <div class="text-[11.5px] text-slate-500 font-sans mb-3">Discuss with client's tax and regulatory advisor. Not tax or legal advice.</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-[12.5px] text-slate-800 font-sans">
+          <div>
+            <div class="font-semibold text-slate-900">Section 163(j) interest deductibility</div>
+            <div class="mt-1 text-slate-700">ABL interest tracked against the 30% adjusted-taxable-income ceiling; flag if utilization sustained above 70%.</div>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-900">FMCSA operating authority &amp; broker bond</div>
+            <div class="mt-1 text-slate-700">Annual MCS-150 update, $75K BMC-84/85 broker bond, multi-state operating authority footprint.</div>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-900">Multi-state income tax apportionment</div>
+            <div class="mt-1 text-slate-700">Freight revenue sourcing rules vary by state (origin, destination, mileage, three-factor). Footprint across IL/TX/CA/GA/NJ/OH/PA/FL drives apportionment complexity.</div>
+          </div>
+          <div>
+            <div class="font-semibold text-slate-900">Section 199A pass-through deduction</div>
+            <div class="mt-1 text-slate-700">LLC entity structure may qualify principals for QBI deduction; W-2 wage and UBIA limitations apply at $82M revenue scale.</div>
+          </div>
+        </div>
+
+        <!-- 10. Competitive displacement -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3">Competitive displacement</h2>
+        <p class="text-[13.5px] leading-relaxed text-slate-800" style="font-family: 'Source Serif Pro', 'Fraunces', Georgia, serif;">
+          Northstar currently banks with a mid-tier commercial bank. A top-tier national bank offers four capabilities the
+          incumbent cannot match: <span class="font-semibold">(1)</span> a broader lockbox network for multi-state shipper
+          remittances, compressing posting latency from 2.4 days to 1.1; <span class="font-semibold">(2)</span> FedNow-enabled
+          carrier payouts at sub-cent per-transaction cost vs. wire fees; <span class="font-semibold">(3)</span> integrated
+          FX for US–Mexico cross-border freight settlement; <span class="font-semibold">(4)</span> a commercial card rebate
+          program worth approximately <span class="num">${usd(cardRebate)}</span> annually at ~<span class="num">${usd(2_500_000)}</span> corporate card spend, with freight-specific category tracking. The integrated client-side savings of
+          <span class="num print-accent font-semibold">${usd(c.total)}</span> plus the ABL competitive participation
+          is a concrete switching rationale.
+        </p>
+
+        <!-- 11. Pre-onboarding -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3 print-avoid-break">Pre-onboarding checks</h2>
+        <div class="text-[12.5px] text-slate-700 font-sans grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5">
+          <div>· OFAC + SDN screening</div>
+          <div>· Beneficial ownership (FinCEN CDD)</div>
+          <div>· FMCSA broker authority and BMC-84 surety bond verification</div>
+          <div>· Cargo &amp; contingent insurance review</div>
+          <div>· Concentration risk review</div>
+          <div>· KYC refresh · BSA/AML disposition</div>
+          <div>· Sanctions screening on principals</div>
+        </div>
+
+        <!-- Footer disclosure -->
+        <div class="mt-12 pt-4 border-t border-slate-300 text-[9px] text-slate-500 leading-relaxed font-sans">
+          <span class="uppercase tracking-[0.12em] text-slate-600 font-semibold">Disclosures.</span>
+          Prototype built on Plaid sandbox data. Simulated merchant. Not a real financial product. Recommendations,
+          scores, and projected revenues are illustrative and generated by a deterministic model operating on
+          synthesized inputs. Not an offer of credit, deposit, payment processing, or treasury services. Built by
+          Michael Stanat. Not affiliated with or endorsed by any financial institution.
+        </div>
+      </div>
+    </div>
+  `;
+}
+function buildTab3Charts() {}
+function buildTab4Charts() {}
+function buildTab6Charts() {}
+
+/* ================================================================== *
+ *  Ask the Relationship — copilot
+ * ================================================================== */
+const COPILOT_QA = [
+  { q: "Why is our STP rate below benchmark?",
+    a: "Current STP rate of 91.8% trails the 95.5% top-tier benchmark by 370 bps. Primary drivers are exception-handling on freight claims, detention, and accessorials — invoices that don't auto-match against the carrier-confirmed POD or rate confirmation drop into manual reconciliation. Closing the gap captures roughly $50,500 annually at current $68M inbound volume." },
+  { q: "What's the payback on migrating 40% of shipper volume to RTP?",
+    a: "At 40% RTP migration on the $32.6M ACH-routed inbound slice, settlement velocity compresses from 1–3 days to instant. Operational lift (DSO compression, reduced exception cost, reduced lockbox latency) is roughly $34,000 annualized. Against a $38,000 one-time migration cost, payback is approximately 13 months. RTP rails are ISO 20022-native; counterparty bank participation is the gating constraint." },
+  { q: "How does pricing change if auth rate improves 200 bps?",
+    a: "CNP auth approval currently runs 93.1%. A 200 bps lift to ~95.1% recovers ~$36,000 of previously declined revenue at $23.1M card-addressable volume. That lift is structurally tied to network tokenization coverage and issuer routing optimization. Pricing posture can tighten by ~5 bps on blended take-rate without sacrificing margin." },
+  { q: "What's the biggest revenue leak in this portfolio?",
+    a: "The single largest leak is STP rate at $50,500 annually (370 bps gap). Level 3 data penetration is second at $38,000, followed by Auth approval (CNP) at $33,000. Aggregated across all eight operational metrics, total annual leakage is $176,900. Prioritizing STP and L3 capture recovers roughly half of the gap in the first quarter of implementation." },
+  { q: "How does the revolver stress test at SOFR +200?",
+    a: "On the $40M asset-based revolver outstanding at SOFR + 375 (currently ~8.05% all-in), a +200 bps SOFR shock pushes the rate to ~10.05%. Annual interest expense rises from ~$3.22M to ~$4.02M — an $800K increase. Fixed-charge coverage compresses but stays inside the 1.15× covenant under base-case EBITDA. Verdict: Watch (no covenant trip in base case), with re-pricing trigger at +250 bps." },
+  { q: "What's our estimated wallet share vs addressable opportunity?",
+    a: "Indicative current wallet share at the incumbent mid-tier bank is ~28% of Northstar's payments + treasury + credit spend. The integrated proposal models a wallet share opportunity of ~78% (illustrative) across the ABL revolver participation, treasury management, and merchant acceptance. Year 1 is a ramping year (~$550K) as treasury, credit, and card acceptance onboard across months 2–7; Year 2 reaches steady state at ~$900K. See the Tab 5 multi-year build table for the full Y1–Y5 trajectory (5-year cumulative ~$4.94M, illustrative)." },
+];
+
+function initCopilot() {
+  const fab = document.getElementById('copilot-fab');
+  const panel = document.getElementById('copilot-panel');
+  const close = document.getElementById('copilot-close');
+  const conv = document.getElementById('copilot-conv');
+  const chips = document.getElementById('copilot-chips');
+  fab.addEventListener('click', () => panel.classList.toggle('open'));
+  close.addEventListener('click', () => panel.classList.remove('open'));
+  // Initial bot greeting
+  conv.innerHTML = `<div class="copilot-msg-bot">Hi — I can answer six pre-set questions about Northstar's payments performance, pricing, and relationship economics. Pick a question below to begin.</div>`;
+  // Render chips
+  chips.innerHTML = COPILOT_QA.map((qa, i) => `
+    <button class="copilot-chip" data-i="${i}">${qa.q}</button>
+  `).join('');
+  chips.querySelectorAll('.copilot-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.i, 10);
+      const qa = COPILOT_QA[i];
+      conv.insertAdjacentHTML('beforeend', `<div class="copilot-msg-user">${qa.q}</div>`);
+      setTimeout(() => {
+        conv.insertAdjacentHTML('beforeend', `<div class="copilot-msg-bot">${qa.a}</div>`);
+        conv.scrollTop = conv.scrollHeight;
+      }, 220);
+      conv.scrollTop = conv.scrollHeight;
+    });
+  });
+}
+
+/* ================================================================== *
+ *  Main
+ * ================================================================== */
+async function main() {
+  initChartDefaults();
+  try {
+    await Promise.all([loadData(), loadUSGeo()]);
+    document.getElementById('header-date').textContent = fmtDaily.format(new Date());
+    renderTabs();
+    renderAllPanels();
+    initCopilot();
+    document.getElementById('loading').classList.add('hidden');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error').classList.remove('hidden');
+  }
+}
+main();
+</script>
+</body>
+</html>
