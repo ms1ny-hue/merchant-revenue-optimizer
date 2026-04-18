@@ -437,7 +437,7 @@ const CONFIG = {
   persona: {
     name: "Northstar Logistics Partners, LLC",
     industry: "Asset-light freight broker & 3PL",
-    revenue: 82_000_000,
+    revenue: 68_000_000,
     employees: 140,
     founded: 2006,
     tenure: 0,
@@ -449,7 +449,7 @@ const CONFIG = {
     currentProcessor: "Regional acquirer",
     currentBank: "Mid-tier commercial bank",
     mcc: "4214 (Motor Freight Carriers and Trucking)",
-    chargebackRate: 0.0004,
+    chargebackRate: 0.0012,
   },
   payments: {
     inboundVolume:  68_000_000,
@@ -466,14 +466,14 @@ const CONFIG = {
       'Same-day ACH':                 { cost: 0.55,  speed: 'Same-day',     finality: 'Reversible',            use: 'Carrier payouts, predictable schedule' },
       'Card':                         { cost: 2.65,  speed: 'Real-time auth', finality: 'Chargeback 120d',     use: 'Convenience, smaller-ticket shippers (CNP)' },
       'Virtual card / push-to-card':  { cost: 1.80,  speed: 'Minutes',      finality: 'Near-final',            use: 'Expedited carrier payouts (Visa Direct / Mastercard Send)' },
-      'PBB':                          { cost: 0.50,  speed: 'Same-day',     finality: 'Near-final',            use: 'Recurring B2B, high-ticket shipper-side' },
+      'PBB':                          { cost: 0.35,  speed: 'Same-day',     finality: 'Near-final',            use: 'Recurring B2B, high-ticket shipper-side' },
       'RTP':                          { cost: 0.45,  speed: 'Instant 24/7', finality: 'Immediate, irrevocable', use: 'Inbound RfP for shipper acceleration' },
       'FedNow':                       { cost: 0.45,  speed: 'Instant 24/7', finality: 'Immediate, irrevocable', use: 'Outbound carrier payouts, urgent' },
       'Wire':                         { cost: 15.00, speed: 'Same-day',     finality: 'Immediate, irrevocable', use: 'Large-ticket (>$25K), cross-border, escrow' },
       'Check':                        { cost: 2.50,  speed: '3–5 days',     finality: 'Revocable',             use: 'Legacy shipper holdouts only' },
       'Factoring':                    { cost: 1.20,  speed: '2–4 days',     finality: 'Assigned',              use: 'Carrier liquidity preference; bank passes through' },
     },
-    migrationCostOneTime: 38_000,
+    migrationCostOneTime: 125_000,
   },
   geography: {
     shipperOrigin: [
@@ -523,7 +523,7 @@ const CONFIG = {
       { metric: 'Wire repair rate',                           current: '1.9%',   target: '0.8%',   gap: '110 bps',  annualValue:  3_100, source: 'Fed/Industry' },
     ],
     peerMedians: { stp: 0.962, authCNP: 0.951, l3: 0.55, sdach: 0.78 },
-    cohortNote: 'Synthetic cohort: 14 freight brokers and 3PLs · $40M–$150M revenue · NAICS 541614 and 484 · benchmarks reflect top-tier commercial bank and Visa/Mastercard averages.',
+    cohortNote: 'Synthetic cohort: 14 freight brokers and 3PLs · $40M–$150M revenue · NAICS 541614 and 484 · benchmarks are synthetic, modeled on published Visa Performance Intelligence and Nacha operational guidance.',
   },
   pricingModels: [
     { id: 'ip',  name: 'Interchange-plus',  bps: 10, authFee: 0.08, blended: null,    monthly: 0,   recommended: true,
@@ -539,29 +539,44 @@ const CONFIG = {
   // Bank revenue economics
   bankRevenue: {
     depositNII: 0.0175,                  // 175 bps blended NII on combined balances
-    ablOutstanding: 40_000_000,
-    ablNetMarginBps: 175,                // bank net spread share on ABL (after funding) → ~$700K / yr
+    ablOutstanding: 8_000_000,
+    ablNetMarginBps: 175,                // bank net spread share on ABL (after funding) → ~$140K / yr on $8M
     ablSofrSpreadBps: 375,               // SOFR + 375 stated rate
     interchangeShareBps: 20,             // 20 bps share on shipper card volume
     treasuryFeeIncome: 58_000,           // ZBA + positive pay + lockbox + controlled disbursement + ACH origination + FX
     cardRebateVolume: 2_500_000,         // estimated annual corporate card spend (T&E + operations)
-    cardRebateBps: 10,                   // 10 bps share on card rebate → $25K / yr
+    cardRebateBps: 100,                  // 100 bps share on $2.5M corporate card spend → $25K / yr
     cardRebate: 25_000,
   },
-  // Revenue capture waterfall components — must reconcile to $386,000
+  // Revenue capture waterfall components — reconciles to $291,460.
+  //
+  // Two nested layers:
+  //   Layer 1 — rate compression of 87 bps on the $23.1M card-addressable
+  //     base = $200,970. Processor margin, L3, downgrade qualification, and
+  //     tokenization are COMPONENTS OF the 87 bps, not additions on top.
+  //   Layer 2 — incremental operational items outside the rate:
+  //     auth lift (+$56,500) and inbound RTP float recapture (+$33,990).
   capture: {
-    base: 23_100_000,
+    base: 23_100_000,                    // current-state card base before rail migration
+    postMigrationBase: 19_000_000,       // after migration a slice of card shifts to RTP
     currentBlended: 0.0265,
     optimizedBlended: 0.0178,
     components: [
-      { label: 'Direct rate compression',     value: 200_970, note: '$23.1M × (2.65% − 1.78%)' },
-      { label: 'Level 3 capture',             value: 69_300,  note: '30 bps × $23.1M' },
-      { label: 'Tokenization capture',        value:  9_240,  note: '4 bps × $23.1M' },
-      { label: 'Auth lift (CNP)',             value: 56_500,  note: 'Recovered declined transactions × margin' },
-      { label: 'Downgrade recovery',          value: 16_000,  note: '470 bps qual. recovery on downgraded volume' },
-      { label: 'RTP migration (inbound)',     value: 33_990,  note: 'ACH-to-RTP ops lift on inbound shipper RfP' },
+      {
+        label: 'Rate compression · 87 bps on $23.1M',
+        value: 200_970,
+        note: 'Processor margin ~20 bps + L3 ~43 bps + downgrade qualification ~20 bps + tokenization ~4 bps = 87 bps. Sub-items are components of the 87 bps, not stacked additions.',
+        subs: [
+          { label: 'Processor margin',           bps: 20 },
+          { label: 'Level 3 qualification',      bps: 43 },
+          { label: 'Downgrade qualification',    bps: 20 },
+          { label: 'Tokenization',               bps:  4 },
+        ],
+      },
+      { label: 'Auth lift (CNP)',                           value: 56_500, note: 'Recovered declined transactions × margin' },
+      { label: 'Float recapture and return avoidance on inbound RTP migration', value: 33_990, note: '1.3 days float × $17.7M × 4.25% + 16 bps return avoidance × $17.7M' },
     ],
-    total: 386_000,
+    total: 291_460,
   },
   covenants: [
     { key: 'Min fixed-charge coverage', threshold: 1.15, unit: 'x',     direction: 'min' },
@@ -573,6 +588,17 @@ const CONFIG = {
     indicativeScore: 728,
     indicativeGrade: 'B+',
     confidence: 'high',
+    rubric: {
+      scale: '300–850 commercial adaptation',
+      components: [
+        { factor: 'Payment performance',    weight: 0.35, score: 760 },
+        { factor: 'Cash flow stability',    weight: 0.25, score: 720 },
+        { factor: 'Leverage',               weight: 0.20, score: 700 },
+        { factor: 'Relationship tenure',    weight: 0.10, score: 680 },
+        { factor: 'Industry concentration', weight: 0.10, score: 710 },
+      ],
+      source: 'Illustrative commercial banking risk rubric; not a production model.',
+    },
   },
   scale: 10,
   assumptions: {
@@ -838,6 +864,51 @@ function kpiSmall(label, value, sub, color) {
   `;
 }
 
+// Renders the 5-factor scoring rubric table. Used on Tab 1 (dark theme)
+// and Tab 7 (print-style light theme).
+function renderScoringRubric(theme) {
+  const r = CONFIG.scoring.rubric;
+  if (!r) return '';
+  const dark = theme !== 'print';
+  const wrapCls     = dark ? 'border hairline rounded-sm p-3'                             : 'border border-slate-300 rounded-sm p-3 bg-white';
+  const eyebrowCls  = dark ? 'eyebrow eyebrow-violet'                                      : 'text-[9px] uppercase tracking-[0.14em] text-emerald-700 font-semibold font-sans';
+  const captionCls  = dark ? 'text-[10.5px] text-[var(--text-dim)] leading-snug mt-0.5'    : 'text-[10px] text-slate-500 mt-0.5 font-sans';
+  const theadCls    = dark ? 'text-[10px] uppercase tracking-widest text-[var(--text-dim)]': 'text-[9px] uppercase tracking-[0.12em] text-slate-500 font-sans';
+  const rowCls      = dark ? 'border-b hairline'                                           : 'border-b border-slate-200';
+  const factorCls   = dark ? 'text-slate-100'                                              : 'text-slate-900 font-sans';
+  const weightCls   = dark ? 'num text-[var(--text-mute)] text-right'                      : 'num text-slate-600 text-right font-sans';
+  const scoreCls    = dark ? 'num text-slate-50 text-right'                                : 'num text-slate-900 text-right font-sans';
+  const footnoteCls = dark ? 'mt-2 text-[10px] text-[var(--text-dim)] italic leading-snug' : 'mt-2 text-[9.5px] text-slate-500 italic font-sans';
+
+  return `
+    <div class="${wrapCls}">
+      <div class="flex items-baseline justify-between gap-3">
+        <div>
+          <div class="${eyebrowCls}">Scoring rubric · ${CONFIG.scoring.indicativeScore} (${CONFIG.scoring.indicativeGrade})</div>
+          <div class="${captionCls}">${r.scale}</div>
+        </div>
+      </div>
+      <table class="w-full mt-2 text-[11px]">
+        <thead><tr class="${theadCls} text-left">
+          <th class="py-1 pr-3 font-medium">Factor</th>
+          <th class="py-1 pr-3 font-medium text-right">Weight</th>
+          <th class="py-1 font-medium text-right">Score</th>
+        </tr></thead>
+        <tbody>
+          ${r.components.map((c) => `
+            <tr class="${rowCls}">
+              <td class="py-1 pr-3 ${factorCls}">${c.factor}</td>
+              <td class="py-1 pr-3 ${weightCls}">${(c.weight * 100).toFixed(0)}%</td>
+              <td class="py-1 ${scoreCls}">${c.score}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="${footnoteCls}">${r.source}</div>
+    </div>
+  `;
+}
+
 /* ================================================================== *
  *  STUB tab renderers — filled in by subsequent edits
  * ================================================================== */
@@ -864,7 +935,7 @@ function renderTab1() {
         <div><div class="eyebrow">Combined balances</div><div class="mt-1 num text-[17px] text-slate-50 font-light">${usd(deposits)}</div></div>
         <div><div class="eyebrow">Current bank tenure</div><div class="mt-1 num text-[17px] text-slate-50 font-light">0 yrs <span class="text-[var(--text-dim)] text-[12px]">· net-new pitch</span></div></div>
         <div><div class="eyebrow">Est. current wallet share</div><div class="mt-1 num text-[17px] text-slate-50 font-light">28% <span class="text-[var(--text-dim)] text-[12px]">at incumbent</span></div></div>
-        <div><div class="eyebrow">Opportunity size</div><div class="mt-1 num text-[13px] text-emerald-300 font-light leading-snug">Y1 $550K · steady-state ~$900K <span class="text-[var(--text-dim)]">· 5-yr ~$4.94M</span></div></div>
+        <div><div class="eyebrow">Opportunity size</div><div class="mt-1 num text-[13px] text-emerald-300 font-light leading-snug">Y1 $210K · steady-state ~$350K <span class="text-[var(--text-dim)]">· 5-yr ~$1.92M</span></div></div>
       </div>
     </div>
 
@@ -906,6 +977,9 @@ function renderTab1() {
             moderate working-capital cyclicality. Modeled underwriting suggests standard terms with no hold and standard reserve (illustrative).
           </div>
         </div>
+
+        <!-- Scoring rubric (underneath the score display on the relationship strip) -->
+        ${renderScoringRubric('dark')}
       </div>
 
       <!-- RIGHT: US map -->
@@ -1598,18 +1672,23 @@ function renderTab5() {
     ${tabHeading('Capture · illustrative', 'Revenue capture waterfall', 5)}
 
     <!-- Opening copy -->
-    <div class="mb-6 text-[13.5px] text-[var(--text-mute)] leading-relaxed max-w-5xl border-l-2 border-emerald-500/60 pl-4">
-      Start from <span class="num text-slate-100">${usd(CONFIG.payments.inboundVolume)}</span> gross inbound volume.
-      Card-addressable portion is <span class="num text-slate-100">${usd(c.base)}</span>
-      (${fmtPct1.format(c.base / CONFIG.payments.inboundVolume)} shipper card mix). Waterfall calculations apply to the
-      card-addressable base.
+    <div class="mb-6 text-[13.5px] text-[var(--text-mute)] leading-relaxed max-w-5xl border-l-2 border-emerald-500/60 pl-4 space-y-1.5">
+      <div>
+        Start from <span class="num text-slate-100">${usd(CONFIG.payments.inboundVolume)}</span> gross inbound volume.
+        Card-addressable portion: <span class="num text-slate-100">${usd(c.base)}</span> current-state card base before rail migration
+        (${fmtPct1.format(c.base / CONFIG.payments.inboundVolume)} shipper card mix). Waterfall calculations apply to the
+        current-state base.
+      </div>
+      <div class="text-[12px] text-[var(--text-dim)]">
+        Post-migration card base: <span class="num">${usd(c.postMigrationBase)}</span> — after a slice of inbound shifts to RTP per the 24-month opportunity set on Tab 4.
+      </div>
     </div>
 
     <!-- Leakage vs capture bridge -->
     <div class="mb-6 border hairline rounded-lg p-5">
       <div class="eyebrow eyebrow-amber">Leakage vs capture</div>
       <div class="mt-2 text-[12.5px] text-[var(--text-mute)] leading-relaxed max-w-5xl">
-        Tab 2 scorecard identifies <span class="num text-slate-100">$176,900</span> in operational leakage across eight metrics. Tab 5 waterfall captures <span class="num text-slate-100">$386,000</span> total. The delta is direct rate compression on card-addressable volume (<span class="num text-slate-100">$200,970</span> at <span class="num">2.65%</span> → <span class="num">1.78%</span>), which is a pricing architecture shift, not an operational fix. Operational + pricing = <span class="num text-slate-100">$377,870</span> core. Ancillary stacking (L3 overlap, tokenization, auth lift, RTP migration) adds <span class="num text-slate-100">$8,130</span> to reach <span class="num text-emerald-300">$386,000</span>.
+        Tab 2 scorecard identifies <span class="num text-slate-100">$176,900</span> in operational leakage across eight metrics. Tab 5 waterfall captures <span class="num text-emerald-300">$291,460</span> total — a different measure. Layer 1 is rate compression of <span class="num">87 bps</span> on the <span class="num">$23.1M</span> card-addressable base (<span class="num text-slate-100">$200,970</span>); processor margin, L3, downgrade qualification, and tokenization are components OF that 87 bps, not stacked on top. Layer 2 is incremental operational gain outside the rate: auth lift <span class="num text-slate-100">$56,500</span> plus inbound RTP float recapture <span class="num text-slate-100">$33,990</span>, together <span class="num text-slate-100">$90,490</span>. Ops leakage and waterfall capture measure different things and should not be summed.
       </div>
     </div>
 
@@ -1633,23 +1712,36 @@ function renderTab5() {
       <!-- Arithmetic footnote -->
       <div class="mt-5 pt-5 border-t hairline">
         <div class="eyebrow mb-3">Arithmetic</div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-[12px] text-[var(--text-mute)]">
+        <div class="text-[12px] text-[var(--text-mute)] space-y-1">
           ${c.components.map((comp) => `
-            <div class="flex items-baseline justify-between border-b hairline py-1.5">
-              <div>
-                <span class="text-slate-100">${comp.label}</span>
-                <span class="text-[10.5px] text-[var(--text-dim)] ml-2 font-mono">${comp.note}</span>
+            <div class="border-b hairline py-1.5">
+              <div class="flex items-baseline justify-between">
+                <div class="flex-1 pr-4">
+                  <span class="text-slate-100">${comp.label}</span>
+                  ${!comp.subs ? `<span class="text-[10.5px] text-[var(--text-dim)] ml-2 font-mono">${comp.note}</span>` : ''}
+                </div>
+                <div class="num text-emerald-300">${usd(comp.value)}</div>
               </div>
-              <div class="num text-emerald-300">${usd(comp.value)}</div>
+              ${comp.subs ? `
+                <div class="mt-1.5 pl-5 space-y-0.5 text-[10.5px]">
+                  ${comp.subs.map((s) => `
+                    <div class="flex items-baseline justify-between text-[var(--text-dim)]">
+                      <span>↳ ${s.label}</span>
+                      <span class="num">~${s.bps} bps</span>
+                    </div>
+                  `).join('')}
+                  <div class="text-[10px] italic mt-1 text-[var(--text-dim)]">${comp.note}</div>
+                </div>
+              ` : ''}
             </div>
           `).join('')}
-          <div class="flex items-baseline justify-between border-b hairline-strong py-2 md:col-span-2">
+          <div class="flex items-baseline justify-between border-b hairline-strong py-2">
             <div class="text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">Total annual capture</div>
             <div class="num text-emerald-300 font-semibold text-base">${usd(c.total)}</div>
           </div>
         </div>
         <div class="mt-4 text-[12px] text-[var(--text-mute)] leading-relaxed max-w-4xl">
-          Gross compression plus ancillary improvements total approximately <span class="num text-slate-100">$411,180</span> on the <span class="num text-slate-100">$23.1M</span> card-addressable base. Net of estimated <span class="num text-slate-100">$25,180</span> implementation cost: <span class="num text-emerald-300">$386,000</span> year-one capture.
+          Layer 1 (<span class="num text-slate-100">${usd(200_970)}</span>, 87 bps rate compression) plus Layer 2 (<span class="num text-slate-100">${usd(90_490)}</span>, auth lift and inbound RTP float recapture) sum to <span class="num text-emerald-300">${usd(c.total)}</span> on the <span class="num text-slate-100">${usd(c.base)}</span> current-state card base. Post-migration card base falls to <span class="num">${usd(c.postMigrationBase)}</span>.
         </div>
       </div>
     </div>
@@ -1724,13 +1816,13 @@ function renderTab5() {
         </div>
       </div>
       <div class="mt-3 text-[11.5px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
-        Year 1 partial capture of ~${usd(550_000)} reflects ramping onboarding across the four pillars.
+        Year 1 partial capture of ~${usd(210_000)} reflects ramping onboarding across the four pillars (approximately 60% of Year-2 steady state).
       </div>
 
       <div class="mt-6 pt-5 border-t hairline">
         <div class="flex items-baseline justify-between flex-wrap gap-3 mb-3">
           <div class="eyebrow eyebrow-accent">5-year relationship value build · illustrative</div>
-          <div class="text-[11px] text-[var(--text-dim)] uppercase tracking-wider">Cumulative ~$4.94M</div>
+          <div class="text-[11px] text-[var(--text-dim)] uppercase tracking-wider">Cumulative ~$1.92M</div>
         </div>
         <table class="w-full text-[12.5px]">
           <thead>
@@ -1744,31 +1836,31 @@ function renderTab5() {
             <tr class="border-b hairline">
               <td class="py-2 pr-4 text-slate-100">Year 1</td>
               <td class="py-2 pr-4 text-[var(--text-mute)]">Partial-year capture. ABL onboarded month 2. Treasury products onboarded months 3–6. Card acceptance migrated months 4–7. Average wallet share across Year 1 ~60% of Year-2 steady state.</td>
-              <td class="py-2 text-right num text-slate-50">~${usd(550_000)}</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(210_000)}</td>
             </tr>
             <tr class="border-b hairline">
               <td class="py-2 pr-4 text-slate-100">Year 2</td>
               <td class="py-2 pr-4 text-[var(--text-mute)]">Steady-state capture at 78% wallet share target. Full-year fee run-rate. Card volume at baseline.</td>
-              <td class="py-2 text-right num text-slate-50">~${usd(900_000)}</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(350_000)}</td>
             </tr>
             <tr class="border-b hairline">
               <td class="py-2 pr-4 text-slate-100">Year 3</td>
-              <td class="py-2 pr-4 text-[var(--text-mute)]">Fee expansion · ABL utilization uplift · card rebate volume scaling (~$40K).</td>
-              <td class="py-2 text-right num text-slate-50">~${usd(1_050_000)}</td>
+              <td class="py-2 pr-4 text-[var(--text-mute)]">Fee expansion · ABL utilization uplift · card rebate volume scaling.</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(410_000)}</td>
             </tr>
             <tr class="border-b hairline">
               <td class="py-2 pr-4 text-slate-100">Year 4</td>
               <td class="py-2 pr-4 text-[var(--text-mute)]">Baseline volume growth ~10% + modest fee ramp.</td>
-              <td class="py-2 text-right num text-slate-50">~${usd(1_160_000)}</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(450_000)}</td>
             </tr>
             <tr class="border-b hairline">
               <td class="py-2 pr-4 text-slate-100">Year 5</td>
               <td class="py-2 pr-4 text-[var(--text-mute)]">Baseline volume growth ~10%.</td>
-              <td class="py-2 text-right num text-slate-50">~${usd(1_280_000)}</td>
+              <td class="py-2 text-right num text-slate-50">~${usd(500_000)}</td>
             </tr>
             <tr>
               <td colspan="2" class="pt-3 text-slate-200 font-semibold uppercase tracking-[0.08em] text-[11px]">5-year cumulative (illustrative)</td>
-              <td class="pt-3 text-right num text-emerald-300 font-semibold text-base">~${usd(4_940_000)}</td>
+              <td class="pt-3 text-right num text-emerald-300 font-semibold text-base">~${usd(1_920_000)}</td>
             </tr>
           </tbody>
         </table>
@@ -1780,10 +1872,11 @@ function renderTab5() {
 
     <div class="text-[11px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
       <span class="eyebrow mr-1.5">Reconciliation</span>
-      Direct compression: <span class="num text-[var(--text-mute)]">$23.1M × (2.65% − 1.78%) = $200,970</span>.
-      Additional contributions from L3 interchange qualification gain, tokenization downgrade avoidance,
-      auth improvement on lost transactions, and RTP migration on inbound ACH-to-RTP conversion bring the
-      total to <span class="num text-[var(--text-mute)]">$386,000</span>. Arithmetic reconciles in the table above.
+      Layer 1 — rate compression: <span class="num text-[var(--text-mute)]">$23.1M × (2.65% − 1.78%) = $200,970</span>
+      (processor margin, L3, downgrade qualification, and tokenization are components of the 87 bps, not stacked on top).
+      Layer 2 — incremental: auth lift <span class="num text-[var(--text-mute)]">$56,500</span> plus inbound RTP float recapture
+      <span class="num text-[var(--text-mute)]">$33,990</span>, together <span class="num text-[var(--text-mute)]">$90,490</span>.
+      Total <span class="num text-[var(--text-mute)]">$291,460</span>. Arithmetic reconciles in the table above.
     </div>
   `;
 }
@@ -1888,8 +1981,8 @@ function renderTab6() {
   const scenarios = [
     { id: 'vol',    label: 'Shipper volume −20%',           impact: 'Borrowing base −18% ($7.2M avail. compression)', fccrImpact: 1.28, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
       detail: 'Freight recession scenario. AR shrinks proportionally; 80% advance rate still clears minimum availability covenant with ~$3.2M headroom.' },
-    { id: 'sofr',   label: 'SOFR +200 bps',                 impact: 'Interest expense +$800K annually',               fccrImpact: 1.19, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
-      detail: 'Rate shock on $40M ABL outstanding. FCCR compresses to 1.19× (above 1.15× covenant). Re-price trigger activates at +250 bps.' },
+    { id: 'sofr',   label: 'SOFR +200 bps',                 impact: 'Interest expense +$160K annually',               fccrImpact: 1.19, verdict: 'Tightens under base assumptions',  verdictColor: 'warn',
+      detail: 'Rate shock on $8M ABL outstanding. FCCR compresses to 1.19× (above 1.15× covenant). Re-price trigger activates at +250 bps.' },
     { id: 'carrier',label: 'Carrier rate pressure +15%',    impact: 'Gross margin −240 bps · DSCR to 1.31×',         fccrImpact: 1.31, verdict: 'Holds under base assumptions',   verdictColor: 'ok',
       detail: 'Carrier capacity cost pass-through usually lags shipper rate adjustments 45–60 days. Short-term margin compression; recovers inside one quarter.' },
     { id: 'shipper',label: 'Top-10 shipper loss (−20% rev.)', impact: 'HHI +420 points · availability −$1.8M · FCCR 1.22×', fccrImpact: 1.22, verdict: 'Would trigger repricing under base assumptions', verdictColor: 'warn',
@@ -2113,6 +2206,19 @@ function renderTab7() {
           concentration <span class="num">${fmtPct1.format(CONFIG.geography.top3Concentration)}</span> · State-level HHI <span class="num">${CONFIG.geography.stateHHI.toLocaleString()}</span>.
         </div>
 
+        <!-- 1b. Credit tier + scoring rubric -->
+        <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-10 mb-3">Credit tier</h2>
+        <div class="grid grid-cols-[auto,1fr] gap-6 items-start">
+          <div>
+            <div class="text-[40px] leading-none num font-normal text-slate-900" style="font-family: 'Fraunces', Georgia, serif;">${CONFIG.scoring.indicativeScore}</div>
+            <div class="text-[11px] uppercase tracking-widest text-emerald-700 mt-1 font-sans font-semibold">Indicative tier</div>
+            <div class="text-[12px] text-slate-700 font-sans">${CONFIG.scoring.indicativeGrade} (illustrative) · ${CONFIG.scoring.confidence} confidence</div>
+          </div>
+          <div>
+            ${renderScoringRubric('print')}
+          </div>
+        </div>
+
         <!-- 2. Recommended pricing model -->
         <h2 class="text-[10px] uppercase tracking-[0.16em] text-emerald-700 font-sans font-semibold mt-12 mb-3">Recommended pricing model</h2>
         <div class="border-l-4 border-emerald-700 pl-4">
@@ -2151,7 +2257,7 @@ function renderTab7() {
           <div class="border-l-4 border-emerald-700 pl-4">
             <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Total capture</div>
             <div class="mt-1 num text-3xl print-accent" style="font-family: 'Fraunces', Georgia, serif; font-weight: 400;">${usd(c.total)}</div>
-            <div class="text-[11px] text-slate-600 mt-1">Direct compression + L3 + tokenization + auth lift + RTP migration</div>
+            <div class="text-[11px] text-slate-600 mt-1">Layer 1 rate compression (87 bps, incl. processor margin + L3 + downgrade + tokenization as components) + Layer 2 auth lift + inbound RTP float recapture</div>
           </div>
           <div class="border-l-4 border-slate-400 pl-4">
             <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Direct rate compression</div>
@@ -2159,9 +2265,9 @@ function renderTab7() {
             <div class="text-[11px] text-slate-600 mt-1">$23.1M × (2.65% − 1.78%)</div>
           </div>
           <div class="border-l-4 border-slate-400 pl-4">
-            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Operational uplift</div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold">Incremental (Layer 2)</div>
             <div class="mt-1 num text-2xl text-slate-900" style="font-family: 'Fraunces', Georgia, serif; font-weight: 400;">${usd(c.total - 200_970)}</div>
-            <div class="text-[11px] text-slate-600 mt-1">L3, tokenization, auth, downgrade recovery, RTP migration</div>
+            <div class="text-[11px] text-slate-600 mt-1">Auth lift + inbound RTP float recapture</div>
           </div>
         </div>
 
@@ -2177,11 +2283,11 @@ function renderTab7() {
           </thead>
           <tbody>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Treasury · Deposit NII</td><td class="py-2.5 text-slate-600">175 bps blended on ${usd(deposits)} combined balances</td><td class="py-2.5 text-right num text-slate-900">${usd(depositNII)}</td></tr>
-            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Credit · ABL revolver interest</td><td class="py-2.5 text-slate-600">SOFR + 375 stated · 175 bps net margin on $40M</td><td class="py-2.5 text-right num text-slate-900">${usd(ablInterest)}</td></tr>
+            <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Credit · ABL revolver interest</td><td class="py-2.5 text-slate-600">SOFR + 375 stated · 175 bps net margin on ${usd(br.ablOutstanding)}</td><td class="py-2.5 text-right num text-slate-900">${usd(ablInterest)}</td></tr>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Interchange share</td><td class="py-2.5 text-slate-600">20 bps share on $23.1M shipper card volume</td><td class="py-2.5 text-right num text-slate-900">${usd(interchangeShare)}</td></tr>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Payments · Commercial card rebate program</td><td class="py-2.5 text-slate-600">10 bps share on estimated ~$2.5M annual corporate card spend (T&amp;E + operations)</td><td class="py-2.5 text-right num text-slate-900">${usd(cardRebate)}</td></tr>
             <tr class="border-b border-slate-200"><td class="py-2.5 text-slate-900">Treasury · Fee income</td><td class="py-2.5 text-slate-600">ZBA, positive pay, lockbox, controlled disbursement, ACH origination, FX</td><td class="py-2.5 text-right num text-slate-900">${usd(treasuryFee)}</td></tr>
-            <tr><td colspan="2" class="pt-3.5 font-semibold text-slate-900 uppercase tracking-[0.06em] text-[11px]">Bank revenue to relationship (illustrative)</td><td class="pt-3.5 text-right text-[15px] print-accent font-medium" style="font-family: 'Fraunces', Georgia, serif;">$550K Year 1 ramping to ~$900K Year 2 steady state</td></tr>
+            <tr><td colspan="2" class="pt-3.5 font-semibold text-slate-900 uppercase tracking-[0.06em] text-[11px]">Bank revenue to relationship (illustrative)</td><td class="pt-3.5 text-right text-[15px] print-accent font-medium" style="font-family: 'Fraunces', Georgia, serif;">$210K Year 1 ramping to ~$350K Year 2 steady state</td></tr>
           </tbody>
         </table>
 
@@ -2211,7 +2317,7 @@ function renderTab7() {
           </div>
           <div>
             <div class="font-semibold text-slate-900">Section 199A pass-through deduction</div>
-            <div class="mt-1 text-slate-700">LLC entity structure may qualify principals for QBI deduction; W-2 wage and UBIA limitations apply at $82M revenue scale.</div>
+            <div class="mt-1 text-slate-700">LLC entity structure may qualify principals for QBI deduction; W-2 wage and UBIA limitations apply at ${usd(p.revenue)} revenue scale.</div>
           </div>
         </div>
 
@@ -2269,9 +2375,9 @@ const COPILOT_QA = [
   { q: "What's the biggest revenue leak in this portfolio?",
     a: "The single largest leak is STP rate at $50,500 annually (370 bps gap). Level 3 data penetration is second at $38,000, followed by Auth approval (CNP) at $33,000. Aggregated across all eight operational metrics, total annual leakage is $176,900. Prioritizing STP and L3 capture recovers roughly half of the gap in the first quarter of implementation." },
   { q: "How does the revolver stress test at SOFR +200?",
-    a: "On the $40M asset-based revolver outstanding at SOFR + 375 (currently ~8.05% all-in), a +200 bps SOFR shock pushes the rate to ~10.05%. Annual interest expense rises from ~$3.22M to ~$4.02M — an $800K increase. Fixed-charge coverage compresses but stays inside the 1.15× covenant under base-case EBITDA. Verdict: Watch (no covenant trip in base case), with re-pricing trigger at +250 bps." },
+    a: "On the $8M asset-based revolver outstanding at SOFR + 375 (currently ~8.05% all-in), a +200 bps SOFR shock pushes the rate to ~10.05%. Annual interest expense rises from ~$644K to ~$804K — a ~$160K increase. Fixed-charge coverage compresses but stays inside the 1.15× covenant under base-case EBITDA. Verdict: Tightens under base assumptions, with re-pricing trigger at +250 bps." },
   { q: "What's our estimated wallet share vs addressable opportunity?",
-    a: "Indicative current wallet share at the incumbent mid-tier bank is ~28% of Northstar's payments + treasury + credit spend. The integrated proposal models a wallet share opportunity of ~78% (illustrative) across the ABL revolver participation, treasury management, and merchant acceptance. Year 1 is a ramping year (~$550K) as treasury, credit, and card acceptance onboard across months 2–7; Year 2 reaches steady state at ~$900K. See the Tab 5 multi-year build table for the full Y1–Y5 trajectory (5-year cumulative ~$4.94M, illustrative)." },
+    a: "Indicative current wallet share at the incumbent mid-tier bank is ~28% of Northstar's payments + treasury + credit spend. The integrated proposal models a wallet share opportunity of ~78% (illustrative) across the ABL revolver participation, treasury management, and merchant acceptance. Year 1 is a ramping year (~$210K) as treasury, credit, and card acceptance onboard across months 2–7; Year 2 reaches steady state at ~$350K. See the Tab 5 multi-year build table for the full Y1–Y5 trajectory (5-year cumulative ~$1.92M, illustrative)." },
 ];
 
 function initCopilot() {
