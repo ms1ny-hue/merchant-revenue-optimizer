@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "endpoint": "/accounts/get",
+    "request_id": "fixture-request-0000000000",
+    "item_id": "fixture-item-0000000000",
+    "status": 200,
+    "latency_ms": 0,
+    "update_type": null,
+    "timestamp": "2026-01-01T00:00:00.000Z",
+    "env": "fixture"
+  },
+  "data": {
+    "accounts": [
+      { "account_id": "fixture_acct_001", "mask": "0001", "type": "depository",  "subtype": "checking",    "name": "Operating Checking",                    "group": "operating", "balance":    620000, "display_balance":    620000 },
+      { "account_id": "fixture_acct_002", "mask": "0002", "type": "depository",  "subtype": "savings",     "name": "Insurance Escrow (Cargo & Contingent)", "group": "operating", "balance":    540000, "display_balance":    540000 },
+      { "account_id": "fixture_acct_003", "mask": "0003", "type": "depository",  "subtype": "cd",          "name": "Fuel Advance Reserve",                   "group": "operating", "balance":    380000, "display_balance":    380000 },
+      { "account_id": "fixture_acct_004", "mask": "0004", "type": "credit",      "subtype": "credit card", "name": "Corporate Card",                         "group": "credit",    "balance":    140000, "display_balance":   -140000 },
+      { "account_id": "fixture_acct_005", "mask": "0005", "type": "depository",  "subtype": "money market","name": "Sweep Money Market",                     "group": "operating", "balance":   1180000, "display_balance":   1180000 },
+      { "account_id": "fixture_acct_006", "mask": "0006", "type": "loan",        "subtype": "mortgage",    "name": "Equipment Finance Line",                 "group": "debt",      "balance":   6000000, "display_balance":  -6000000 },
+      { "account_id": "fixture_acct_007", "mask": "0007", "type": "depository",  "subtype": "hsa",         "name": "Payroll & Tax Reserve",                  "group": "operating", "balance":    520000, "display_balance":    520000 },
+      { "account_id": "fixture_acct_008", "mask": "0008", "type": "depository",  "subtype": "cash management", "name": "Carrier Payout Reserve",              "group": "operating", "balance":   1450000, "display_balance":   1450000 },
+      { "account_id": "fixture_acct_009", "mask": "0009", "type": "credit",      "subtype": "credit card", "name": "Regional Office T&E Card",               "group": "credit",    "balance":     18000, "display_balance":    -18000 }
+    ],
+    "institution": "ins_109508"
+  },
+  "institution_id": "ins_109508"
+}

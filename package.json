@@ -1,0 +1,16 @@
+{
+  "name": "merchant-revenue-optimizer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Commercial banking relationship economics prototype with live Plaid sandbox integration via Netlify Functions.",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site; no build step'"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "plaid": "^27.0.0"
+  }
+}

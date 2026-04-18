@@ -26,6 +26,7 @@
 <script src="https://unpkg.com/d3-array@3"></script>
 <script src="https://unpkg.com/d3-geo@3"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
 <style>
   :root {
     color-scheme: dark;
@@ -204,6 +205,51 @@
   }
   .copilot-chip:hover { border-color: var(--accent); background: rgba(16,185,129,0.08); }
 
+  /* Developer (API) panel */
+  #api-panel {
+    background: rgba(11, 20, 40, 0.97);
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  #api-panel.hidden { display: none; }
+  .api-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.02);
+    font-size: 11px;
+  }
+  .api-card .api-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .api-card .api-ep { font-family: "IBM Plex Mono", monospace; color: var(--text); font-weight: 500; font-size: 11px; }
+  .api-card .api-status { font-family: "IBM Plex Mono", monospace; font-size: 10px; }
+  .api-card .api-status.ok { color: var(--accent); }
+  .api-card .api-status.err { color: var(--crit); }
+  .api-card .api-status.idle { color: var(--text-dim); }
+  .api-card dl { margin-top: 8px; font-size: 10.5px; }
+  .api-card dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dotted rgba(91,121,172,0.15); }
+  .api-card dt { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; font-size: 9.5px; }
+  .api-card dd { color: var(--text); font-family: "IBM Plex Mono", monospace; font-size: 10.5px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .api-btn {
+    background: linear-gradient(135deg, var(--accent), var(--cobalt));
+    color: white;
+    border-radius: 9999px;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 100ms ease, box-shadow 100ms ease;
+  }
+  .api-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,185,129,0.25); }
+  .api-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+  .api-btn-secondary {
+    background: transparent;
+    color: var(--text-mute);
+    border: 1px solid var(--line-strong);
+  }
+  .api-btn-secondary:hover { color: var(--text); border-color: var(--accent); background: rgba(16,185,129,0.06); }
+  #api-panel.hidden ~ * #api-toggle-caret { transform: rotate(0deg); }
+
   /* Print CSS for Tab 7 */
   @media print {
     @page {
@@ -276,10 +322,13 @@
         <div class="hidden md:block text-sm text-slate-100 truncate font-medium">Northstar Logistics Partners, LLC</div>
       </div>
     </div>
-    <div class="hidden md:flex items-center gap-5 text-xs">
+    <div class="hidden md:flex items-center gap-4 text-xs">
       <div class="flex items-center gap-2 eyebrow"><span class="dot dot-ok"></span><span>Sandbox dataset</span></div>
       <div class="h-3 w-px bg-[var(--line-strong)]"></div>
-      <div class="eyebrow text-[var(--text-dim)]">Payments diagnostic · pricing · capture</div>
+      <button id="api-toggle" class="eyebrow eyebrow-accent border border-emerald-500/40 rounded-sm px-2.5 py-1 hover:bg-emerald-500/10 transition flex items-center gap-1.5" aria-expanded="false" aria-controls="api-panel" title="Live Plaid API developer panel">
+        <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+        <span>API</span>
+      </button>
       <div class="h-3 w-px bg-[var(--line-strong)]"></div>
       <div id="header-date" class="num text-[var(--text-mute)]"></div>
     </div>
@@ -289,6 +338,29 @@
       <div class="flex gap-0 text-[13px]" id="tabs"></div>
     </div>
   </nav>
+
+  <!-- Live Plaid API developer panel (collapsible) -->
+  <div id="api-panel" class="hidden">
+    <div class="max-w-[1600px] mx-auto px-5 md:px-7 py-4">
+      <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
+        <div>
+          <div class="eyebrow eyebrow-accent">Plaid API · developer panel</div>
+          <div class="text-[11px] text-[var(--text-mute)] mt-1 max-w-3xl">
+            Live Netlify Functions against the Plaid Sandbox institution <span class="num">ins_109508</span>.
+            Each endpoint card shows the most recent <span class="num">request_id</span>, item ID, HTTP status, and latency.
+            Persona mapping is applied server-side in <span class="num">netlify/functions/_lib/persona.js</span>.
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="api-refresh-all" class="api-btn">Refresh all endpoints</button>
+          <button id="api-plaid-link" class="api-btn api-btn-secondary">Connect an account (Plaid Link)</button>
+        </div>
+      </div>
+      <div id="api-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+      <div id="api-webhooks" class="mt-4"></div>
+      <div id="api-errors" class="mt-3"></div>
+    </div>
+  </div>
 </header>
 
 <!-- Loading / error -->
@@ -322,7 +394,9 @@
       legal, banking, tax, or financial advice.
     </div>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 pt-3 border-t hairline">
-      <div>Created by Michael Stanat &nbsp;|&nbsp; © 2026 Michael Stanat &nbsp;|&nbsp; Merchant Revenue Optimizer portfolio prototype</div>
+      <div>Created by Michael Stanat &nbsp;|&nbsp; © 2026 Michael Stanat &nbsp;|&nbsp; Merchant Revenue Optimizer portfolio prototype &nbsp;|&nbsp;
+        <a href="https://github.com/ms1ny-hue/merchant-revenue-optimizer" target="_blank" rel="noopener" class="underline decoration-dotted hover:text-emerald-300">Source on GitHub</a>
+      </div>
       <div class="eyebrow">Sandbox · v6</div>
     </div>
   </div>
@@ -513,22 +587,11 @@ const CONFIG = {
 };
 
 /* ================================================================== *
- *  Account override map — Northstar operating accounts
+ *  Account override map — moved server-side.
+ *  See netlify/functions/_lib/persona.js. The Netlify Function applies
+ *  the mapping before returning the response, so the frontend receives
+ *  persona-shaped accounts and never sees the raw Plaid sandbox names.
  * ================================================================== */
-const PERSONA_OVERRIDES = {
-  'Plaid Checking':            { name: 'Operating Checking',                 group: 'operating',  scaled_override:    620_000 },
-  'Plaid Saving':              { name: 'Insurance Escrow (Cargo & Contingent)', group: 'operating', scaled_override:  540_000 },
-  'Plaid CD':                  { name: 'Fuel Advance Reserve',               group: 'operating',  scaled_override:    380_000 },
-  'Plaid Credit Card':         { name: 'Corporate Card',                     group: 'credit',     scaled_override:    140_000 },
-  'Plaid Money Market':        { name: 'Sweep Money Market',                 group: 'operating',  scaled_override:  1_180_000 },
-  'Plaid IRA':                 { name: 'Executive Retirement',               group: 'guarantor',  scaled_override:       null },
-  'Plaid 401k':                { name: 'Employee 401(k)',                    group: 'guarantor',  scaled_override:       null },
-  'Plaid Student Loan':        { name: 'Partner Guarantor Note',             group: 'debt',       scaled_override:    425_000 },
-  'Plaid Mortgage':            { name: 'Equipment Finance Line',             group: 'debt',       scaled_override:  6_000_000 },
-  'Plaid HSA':                 { name: 'Payroll & Tax Reserve',              group: 'operating',  scaled_override:    520_000 },
-  'Plaid Cash Management':     { name: 'Carrier Payout Reserve',             group: 'operating',  scaled_override:  1_450_000 },
-  'Plaid Business Credit Card':{ name: 'Regional Office T&E Card',           group: 'credit',     scaled_override:     18_000 },
-};
 
 /* ================================================================== *
  *  Formatters
@@ -549,13 +612,35 @@ const signed = (n) => (n >= 0 ? '+' : '') + usd(n);
 /* ================================================================== *
  *  STATE + Chart.js defaults
  * ================================================================== */
-const STATE = { data: null, accounts: [], transactions: [], charts: {}, usGeo: null, sim: {
-  shipperVolume: 23_100_000,
-  shipperGrowth: 0.05,
-  railShift: 0.20,
-  pricingTierBps: 10,
-  stress: false,
-}};
+const STATE = {
+  data: null,
+  accounts: [],
+  charts: {},
+  usGeo: null,
+  // Live Plaid integration metadata, one entry per endpoint for the dev panel.
+  apiMeta: {
+    accounts:    null,
+    transactions:null,
+    identity:    null,
+    liabilities: null,
+    auth:        null,
+    item:        null,
+    linkToken:   null,
+    exchange:    null,
+    webhooks:    null,
+  },
+  apiErrors: [],          // last few error payloads surfaced in the dev panel
+  webhookEvents: [],      // last N webhook bodies
+  plaidLink: { handler: null, linkToken: null },
+  useFixture: false,      // toggled via ?fixture=1 URL param
+  sim: {
+    shipperVolume: 23_100_000,
+    shipperGrowth: 0.05,
+    railShift: 0.20,
+    pricingTierBps: 10,
+    stress: false,
+  },
+};
 
 const STATE_NAME_TO_ABBR = {
   Alabama:'AL', Alaska:'AK', Arizona:'AZ', Arkansas:'AR', California:'CA',
@@ -605,32 +690,86 @@ function initChartDefaults() {
 function destroyChart(key) { if (STATE.charts[key]) { STATE.charts[key].destroy(); delete STATE.charts[key]; } }
 
 /* ================================================================== *
- *  Data loader (Plaid sandbox JSON; account override + display only)
+ *  Data loader — Netlify Function endpoints backed by live Plaid API.
+ *
+ *  Default path   : parallel fetch of /.netlify/functions/plaid-accounts
+ *                   and /.netlify/functions/plaid-transactions.
+ *  Offline fallback: append ?fixture=1 to the site URL to load the
+ *                   persona-shaped sample response from
+ *                   ./fixtures/sample-plaid-response.json instead.
+ *
+ *  The Netlify Function applies the persona mapping server-side, so the
+ *  response received here is already persona-shaped. Per-endpoint Plaid
+ *  metadata (request_id, item_id, latency, update_type) is recorded into
+ *  STATE.apiMeta for the developer panel to render.
  * ================================================================== */
+function apiPath(name) { return `/.netlify/functions/${name}`; }
+
+async function callPlaidEndpoint(functionName, options = {}) {
+  const url = apiPath(functionName) + (options.query || '');
+  const started = performance.now();
+  try {
+    const res = await fetch(url, {
+      method: options.method || 'GET',
+      headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      cache: 'no-store',
+    });
+    const clientLatency = Math.round(performance.now() - started);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = (json && json.error) || { code: `HTTP_${res.status}`, message: 'Request failed' };
+      STATE.apiErrors.unshift({ when: new Date().toISOString(), fn: functionName, ...err });
+      STATE.apiErrors = STATE.apiErrors.slice(0, 5);
+      return { ok: false, error: err, meta: null, data: null, clientLatency };
+    }
+    return { ok: true, error: null, meta: json.meta || null, data: json.data || null, extra: json, clientLatency };
+  } catch (err) {
+    const clientLatency = Math.round(performance.now() - started);
+    STATE.apiErrors.unshift({ when: new Date().toISOString(), fn: functionName, code: 'NETWORK_ERROR', message: err.message });
+    STATE.apiErrors = STATE.apiErrors.slice(0, 5);
+    return { ok: false, error: { code: 'NETWORK_ERROR', message: err.message }, meta: null, data: null, clientLatency };
+  }
+}
+
+async function loadFixture() {
+  const res = await fetch('./fixtures/sample-plaid-response.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Fixture load failed: HTTP ${res.status}`);
+  return res.json();
+}
+
 async function loadData() {
-  const res = await fetch('data.json', { cache: 'no-store' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  STATE.data = data;
-  const auth = data.balances?.accounts || data.auth?.accounts || [];
-  const HIDDEN_ACCOUNT_NAMES = new Set(['Executive Retirement', 'Employee 401(k)', 'Partner Guarantor Note']);
-  STATE.accounts = auth.map((a) => {
-    const o = PERSONA_OVERRIDES[a.name] || { name: a.name, group: 'operating', scaled_override: null };
-    const sign = (a.type === 'credit' || a.type === 'loan') ? -1 : 1;
-    const base = (a.balances?.current ?? 0) * CONFIG.scale;
-    const balance = o.scaled_override !== null ? o.scaled_override : base;
-    return {
-      id: a.account_id,
-      name: o.name,
-      group: o.group,
-      mask: a.mask,
-      type: a.type,
-      subtype: a.subtype,
-      balance,
-      display_balance: balance * sign,
-    };
-  }).filter((a) => !HIDDEN_ACCOUNT_NAMES.has(a.name));
-  STATE.transactions = data.transactions || [];
+  const params = new URLSearchParams(window.location.search);
+  STATE.useFixture = params.get('fixture') === '1';
+
+  if (STATE.useFixture) {
+    const fixture = await loadFixture();
+    STATE.data = fixture;
+    STATE.accounts = (fixture.data && fixture.data.accounts) || [];
+    STATE.apiMeta.accounts = { ...(fixture.meta || {}), source: 'fixture' };
+    return;
+  }
+
+  const [accountsResp, txnsResp] = await Promise.all([
+    callPlaidEndpoint('plaid-accounts'),
+    callPlaidEndpoint('plaid-transactions'),
+  ]);
+
+  if (accountsResp.ok) {
+    STATE.apiMeta.accounts = accountsResp.meta;
+    STATE.accounts = (accountsResp.data && accountsResp.data.accounts) || [];
+    STATE.data = accountsResp.extra;
+  } else {
+    STATE.apiMeta.accounts = { endpoint: '/accounts/get', status: accountsResp.error.code, error: accountsResp.error };
+    STATE.accounts = [];
+    throw new Error(`plaid-accounts: ${accountsResp.error.code} — ${accountsResp.error.message}`);
+  }
+
+  if (txnsResp.ok) {
+    STATE.apiMeta.transactions = txnsResp.meta;
+  } else {
+    STATE.apiMeta.transactions = { endpoint: '/transactions/sync', status: txnsResp.error.code, error: txnsResp.error };
+  }
 }
 
 /* ================================================================== *
@@ -2164,6 +2303,248 @@ function initCopilot() {
 }
 
 /* ================================================================== *
+ *  Live Plaid API — developer panel
+ * ================================================================== */
+const API_PANEL_ENDPOINTS = [
+  { key: 'accounts',    fn: 'plaid-accounts',    label: '/accounts/get',                  description: 'Accounts + balances (persona-mapped server-side)' },
+  { key: 'transactions',fn: 'plaid-transactions',label: '/transactions/sync',             description: 'Cursor-based sync (added / modified / removed)' },
+  { key: 'item',        fn: 'plaid-item',        label: '/item/get',                      description: 'Institution metadata + update_type + billed products' },
+  { key: 'identity',    fn: 'plaid-identity',    label: '/identity/get',                  description: 'Owner counts only — PII suppressed at mapping layer' },
+  { key: 'liabilities', fn: 'plaid-liabilities', label: '/liabilities/get',               description: 'Credit + mortgage + student liability summaries' },
+  { key: 'auth',        fn: 'plaid-auth',        label: '/auth/get',                      description: 'Routing + masked account last-4' },
+  { key: 'webhooks',    fn: 'plaid-webhook',     label: '/webhook (GET recent)',          description: 'Last 5 webhooks received by the Netlify function' },
+];
+
+function fmtAge(iso) {
+  if (!iso) return '—';
+  const t = new Date(iso).getTime();
+  if (!isFinite(t)) return '—';
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (s < 60)   return `${s}s ago`;
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  return `${Math.round(s / 3600)}h ago`;
+}
+function short(s, n = 14) {
+  if (!s) return '—';
+  const str = String(s);
+  return str.length <= n ? str : str.slice(0, n - 1) + '…';
+}
+
+function renderAPIPanel() {
+  const grid = document.getElementById('api-grid');
+  if (!grid) return;
+
+  grid.innerHTML = API_PANEL_ENDPOINTS.map((ep) => {
+    const meta = STATE.apiMeta[ep.key];
+    const ok = meta && meta.status === 200;
+    const idle = !meta;
+    const statusClass = idle ? 'idle' : (ok ? 'ok' : 'err');
+    const statusText = idle ? 'idle'
+                     : (meta.error ? `${meta.error.code || meta.status}` : String(meta.status));
+    const extraRows = ep.key === 'item'
+      ? [
+          ['Institution', meta && meta.data_institution_name ? meta.data_institution_name : (STATE.lastInstitutionName || '—')],
+          ['Billed', STATE.lastBilledProducts ? STATE.lastBilledProducts.join(', ') : '—'],
+          ['Update type', meta && meta.update_type ? meta.update_type : '—'],
+        ]
+      : [];
+
+    return `
+      <div class="api-card" data-ep="${ep.key}">
+        <div class="api-head">
+          <div>
+            <div class="api-ep">${ep.label}</div>
+            <div class="text-[10px] text-[var(--text-dim)] mt-0.5 leading-snug max-w-[220px]">${ep.description}</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="api-status ${statusClass}">● ${statusText}</span>
+            ${idle ? '' : `<button class="api-btn api-btn-secondary api-refresh-one" data-fn="${ep.fn}" data-key="${ep.key}" style="padding:3px 8px;font-size:10px;">↻</button>`}
+          </div>
+        </div>
+        <dl>
+          <div><dt>Request ID</dt><dd title="${meta && meta.request_id ? meta.request_id : ''}">${short(meta && meta.request_id, 20)}</dd></div>
+          <div><dt>Item ID</dt><dd title="${meta && meta.item_id ? meta.item_id : ''}">${short(meta && meta.item_id, 20)}</dd></div>
+          <div><dt>Latency</dt><dd>${meta && typeof meta.latency_ms === 'number' ? meta.latency_ms + ' ms' : '—'}</dd></div>
+          <div><dt>Refreshed</dt><dd>${fmtAge(meta && meta.timestamp)}</dd></div>
+          ${extraRows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v || '—'}</dd></div>`).join('')}
+          ${meta && meta.error ? `<div><dt>Error</dt><dd style="color:var(--crit);white-space:normal;max-width:100%;">${meta.error.message || meta.error.code}</dd></div>` : ''}
+        </dl>
+      </div>
+    `;
+  }).join('');
+
+  // Webhook list
+  const wh = document.getElementById('api-webhooks');
+  if (wh) {
+    if (STATE.webhookEvents && STATE.webhookEvents.length) {
+      wh.innerHTML = `
+        <div class="eyebrow eyebrow-sky mb-2">Recent webhooks (last ${STATE.webhookEvents.length})</div>
+        <div class="border hairline rounded-sm divide-y divide-[color:var(--line)]/40">
+          ${STATE.webhookEvents.map((e) => `
+            <div class="px-3 py-2 text-[11px] grid grid-cols-4 gap-2 text-[var(--text-mute)]">
+              <div class="num text-slate-100">${e.webhook_type || '—'}</div>
+              <div class="num">${e.webhook_code || '—'}</div>
+              <div class="num">${short(e.item_id, 20)}</div>
+              <div class="num text-right">${fmtAge(e.received_at)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      wh.innerHTML = `<div class="text-[11px] text-[var(--text-dim)]"><span class="eyebrow eyebrow-sky mr-2">Webhooks</span> none received yet. Configure <span class="num">PLAID_WEBHOOK_URL</span> in Netlify env vars and Plaid dashboard to receive <span class="num">TRANSACTIONS</span> / <span class="num">ITEM</span> events.</div>`;
+    }
+  }
+
+  // Error rail
+  const er = document.getElementById('api-errors');
+  if (er) {
+    if (STATE.apiErrors.length) {
+      er.innerHTML = `
+        <div class="eyebrow" style="color: var(--crit);">Recent errors</div>
+        <div class="mt-1 border rounded-sm" style="border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.06);">
+          ${STATE.apiErrors.map((e) => `
+            <div class="px-3 py-1.5 text-[11px] grid grid-cols-[auto,1fr,auto] gap-3 items-center">
+              <span class="num text-[var(--crit)]">${e.code}</span>
+              <span class="text-[var(--text-mute)]">${e.fn}: ${e.message}</span>
+              <span class="text-[10px] text-[var(--text-dim)]">${fmtAge(e.when)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      er.innerHTML = '';
+    }
+  }
+
+  // Bind per-card refresh buttons
+  grid.querySelectorAll('.api-refresh-one').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const key = btn.dataset.key;
+      const fn  = btn.dataset.fn;
+      btn.disabled = true;
+      if (fn === 'plaid-webhook') {
+        await fetchWebhookEvents();
+      } else {
+        const r = await callPlaidEndpoint(fn);
+        STATE.apiMeta[key] = r.ok ? r.meta : { endpoint: key, status: r.error.code, error: r.error };
+        if (key === 'item' && r.ok && r.data) {
+          STATE.lastInstitutionName = r.data.institution_name || STATE.lastInstitutionName || null;
+          STATE.lastBilledProducts  = r.data.billed_products  || STATE.lastBilledProducts  || null;
+        }
+      }
+      renderAPIPanel();
+    });
+  });
+}
+
+async function fetchAuxiliaryEndpoints() {
+  if (STATE.useFixture) return;
+  const calls = ['plaid-item', 'plaid-identity', 'plaid-liabilities', 'plaid-auth'];
+  const results = await Promise.all(calls.map((fn) => callPlaidEndpoint(fn)));
+  calls.forEach((fn, i) => {
+    const key = fn.replace('plaid-', '');
+    const r = results[i];
+    STATE.apiMeta[key] = r.ok ? r.meta : { endpoint: key, status: r.error.code, error: r.error };
+    if (key === 'item' && r.ok && r.data) {
+      STATE.lastInstitutionName = r.data.institution_name || null;
+      STATE.lastBilledProducts  = r.data.billed_products  || null;
+    }
+  });
+  await fetchWebhookEvents();
+  renderAPIPanel();
+}
+
+async function fetchWebhookEvents() {
+  if (STATE.useFixture) return;
+  const r = await callPlaidEndpoint('plaid-webhook');
+  if (r.ok) {
+    STATE.apiMeta.webhooks   = r.meta;
+    STATE.webhookEvents      = (r.data && r.data.events) || [];
+  } else {
+    STATE.apiMeta.webhooks = { endpoint: '/webhook', status: r.error.code, error: r.error };
+  }
+}
+
+async function refreshAllEndpoints() {
+  if (STATE.useFixture) {
+    alert('Fixture mode active (?fixture=1). Remove the query param to refresh against live Plaid.');
+    return;
+  }
+  const btn = document.getElementById('api-refresh-all');
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+  try {
+    await loadData();                // accounts + transactions
+    await fetchAuxiliaryEndpoints(); // item + identity + liabilities + auth + webhooks
+    renderAllPanels();               // redraw the app with new data
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Refresh all endpoints'; }
+    renderAPIPanel();
+  }
+}
+
+async function connectWithPlaidLink() {
+  if (typeof Plaid === 'undefined') {
+    alert('Plaid Link script failed to load. Check network/CDN.');
+    return;
+  }
+  const btn = document.getElementById('api-plaid-link');
+  if (btn) { btn.disabled = true; btn.textContent = 'Opening Plaid Link…'; }
+  try {
+    const r = await callPlaidEndpoint('plaid-link-token', { method: 'POST' });
+    if (!r.ok) {
+      alert('Link token fetch failed: ' + (r.error && r.error.message));
+      return;
+    }
+    STATE.apiMeta.linkToken = r.meta;
+    const linkToken = r.data && r.data.link_token;
+    if (!linkToken) { alert('No link_token returned.'); return; }
+
+    const handler = Plaid.create({
+      token: linkToken,
+      onSuccess: async (public_token) => {
+        const exch = await callPlaidEndpoint('plaid-exchange', { method: 'POST', body: { public_token } });
+        STATE.apiMeta.exchange = exch.ok ? exch.meta : { endpoint: '/item/public_token/exchange', status: exch.error.code, error: exch.error };
+        await refreshAllEndpoints();
+      },
+      onExit: () => {
+        renderAPIPanel();
+      },
+    });
+    STATE.plaidLink.handler = handler;
+    handler.open();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Connect an account (Plaid Link)'; }
+    renderAPIPanel();
+  }
+}
+
+function initAPIPanel() {
+  const toggle = document.getElementById('api-toggle');
+  const panel  = document.getElementById('api-panel');
+  const refresh = document.getElementById('api-refresh-all');
+  const link   = document.getElementById('api-plaid-link');
+  if (!toggle || !panel) return;
+
+  toggle.addEventListener('click', () => {
+    const nowOpen = panel.classList.contains('hidden');
+    panel.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', String(nowOpen));
+    if (nowOpen) renderAPIPanel();
+  });
+  if (refresh) refresh.addEventListener('click', refreshAllEndpoints);
+  if (link)    link.addEventListener('click', connectWithPlaidLink);
+
+  // Auto-open when URL has ?api=1
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('api') === '1') {
+    panel.classList.remove('hidden');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  renderAPIPanel();
+}
+
+/* ================================================================== *
  *  Main
  * ================================================================== */
 async function main() {
@@ -2174,7 +2555,15 @@ async function main() {
     renderTabs();
     renderAllPanels();
     initCopilot();
+    initAPIPanel();
     document.getElementById('loading').classList.add('hidden');
+
+    // Background: enrich the dev panel with /item, /identity, /liabilities, /auth, /webhook.
+    // These calls demonstrate additional Plaid product-surface coverage and populate
+    // the developer panel without blocking first paint.
+    if (!STATE.useFixture) {
+      fetchAuxiliaryEndpoints().catch((err) => console.warn('Auxiliary endpoints failed:', err));
+    }
   } catch (err) {
     console.error(err);
     document.getElementById('loading').classList.add('hidden');
