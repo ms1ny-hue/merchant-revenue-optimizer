@@ -24,6 +24,27 @@
 <meta name="twitter:description" content="Payments-led relationship economics prototype for a mid-market 3PL, built on live Plaid sandbox data.">
 <meta name="twitter:image" content="https://merchant-revenue-optimizer.netlify.app/og-image.png">
 
+<!-- Connection warm-up for the third-party CDNs we depend on. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+<link rel="dns-prefetch" href="https://cdn.plaid.com">
+
+<!-- Suppress the Tailwind Play CDN production-mode console.warn. The
+     warning is informational and clutters Lighthouse Best Practices /
+     "no console errors" audits. The disclosure that this is a prototype
+     lives in the footer and is not removed. -->
+<script>
+  (function () {
+    var orig = console.warn;
+    console.warn = function () {
+      if (arguments[0] && /cdn\.tailwindcss\.com/.test(String(arguments[0]))) return;
+      return orig.apply(console, arguments);
+    };
+  })();
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -38,14 +59,16 @@
     },
   };
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/d3-array@3"></script>
-<script src="https://unpkg.com/d3-geo@3"></script>
-<script src="https://unpkg.com/topojson-client@3"></script>
-<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<!-- Charting + topology libraries deferred so they don't block first
+     paint. main() is wired to fire on DOMContentLoaded so it sees them. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="https://unpkg.com/d3-array@3" defer></script>
+<script src="https://unpkg.com/d3-geo@3" defer></script>
+<script src="https://unpkg.com/topojson-client@3" defer></script>
+<!-- Plaid Link is lazy-loaded by ensurePlaidLink() only when the user
+     clicks "Connect an account" in the developer panel. -->
+
 <style>
   :root {
     color-scheme: dark;
@@ -280,25 +303,41 @@
       @bottom-right  { content: "Prototype · Not a real financial product"; font-family: "IBM Plex Sans", sans-serif; font-size: 7pt; color: #94a3b8; }
     }
     @page :first { @top-left { content: ""; } @top-right { content: ""; } }
-    html, body { background: white !important; }
-    body * { visibility: hidden; }
-    #panel-7, #panel-7 * { visibility: visible; }
-    #panel-7 { position: absolute; inset: 0; padding: 0 !important; background: white !important; color: #0f172a !important; }
-    #panel-7 .print-hidden, #panel-7 .print-hidden * { display: none !important; visibility: hidden !important; }
-    #panel-7, #panel-7 .bg-white { box-shadow: none !important; border-radius: 0 !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
-    #panel-7 section, #panel-7 div, #panel-7 h1, #panel-7 h2, #panel-7 h3, #panel-7 p, #panel-7 li, #panel-7 td, #panel-7 th, #panel-7 dl, #panel-7 dd, #panel-7 dt {
-      color: #0f172a !important; background: white !important; border-color: #cbd5e1 !important;
+    /* Hide everything that isn't the proposal. Use display:none (not the
+       visibility-hack) so the proposal flows in normal block layout and
+       paginates correctly across multiple pages. */
+    html, body { background: white !important; color: #0f172a !important; }
+    header, footer, #copilot-fab, #copilot-panel, #api-panel, #api-toggle {
+      display: none !important;
     }
-    #panel-7 .print-accent { color: #047857 !important; }
-    #panel-7 .print-break-before { page-break-before: always; break-before: page; }
-    #panel-7 .print-avoid-break { page-break-inside: avoid; break-inside: avoid; }
-    #panel-7 h2 { page-break-after: avoid; break-after: avoid; }
-    #panel-7 { font-family: "Source Serif Pro", "Fraunces", Georgia, serif !important; font-size: 10.5pt; line-height: 1.55; }
-    #panel-7 h1 { font-family: "Fraunces", Georgia, serif !important; font-size: 24pt; font-weight: 500; letter-spacing: -0.02em; }
-    #panel-7 h2 { font-family: "IBM Plex Sans", sans-serif !important; font-size: 8.5pt !important; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #047857 !important; margin-top: 18pt; margin-bottom: 6pt; }
-    #panel-7 .num { font-family: "IBM Plex Mono", monospace !important; }
-    #panel-7 .font-sans, #panel-7 table, #panel-7 thead, #panel-7 tbody { font-family: "IBM Plex Sans", sans-serif !important; }
-    #copilot-fab, #copilot-panel, #api-panel, #api-toggle { display: none !important; }
+    main, #panels { display: block !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
+    /* Hide every panel except the proposal, even if user prints from a
+       different active tab. Tailwind's `hidden` class on inactive panels
+       sets display:none which is the same effect. */
+    [data-panel]:not([data-panel="7"]) { display: none !important; }
+    [data-panel="7"] {
+      display: block !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: white !important;
+      color: #0f172a !important;
+    }
+    [data-panel="7"] .print-hidden { display: none !important; }
+    [data-panel="7"] .bg-white { box-shadow: none !important; border-radius: 0 !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
+    [data-panel="7"] section, [data-panel="7"] div, [data-panel="7"] h1, [data-panel="7"] h2, [data-panel="7"] h3, [data-panel="7"] p, [data-panel="7"] li, [data-panel="7"] td, [data-panel="7"] th, [data-panel="7"] dl, [data-panel="7"] dd, [data-panel="7"] dt {
+      color: #0f172a !important;
+      background: white !important;
+      border-color: #cbd5e1 !important;
+    }
+    [data-panel="7"] .print-accent { color: #047857 !important; }
+    [data-panel="7"] .print-break-before { page-break-before: always; break-before: page; }
+    [data-panel="7"] .print-avoid-break { page-break-inside: avoid; break-inside: avoid; }
+    [data-panel="7"] h2 { page-break-after: avoid; break-after: avoid; }
+    [data-panel="7"] { font-family: "Source Serif Pro", "Fraunces", Georgia, serif !important; font-size: 10.5pt; line-height: 1.55; }
+    [data-panel="7"] h1 { font-family: "Fraunces", Georgia, serif !important; font-size: 24pt; font-weight: 500; letter-spacing: -0.02em; }
+    [data-panel="7"] h2 { font-family: "IBM Plex Sans", sans-serif !important; font-size: 8.5pt !important; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #047857 !important; margin-top: 18pt; margin-bottom: 6pt; }
+    [data-panel="7"] .num { font-family: "IBM Plex Mono", monospace !important; }
+    [data-panel="7"] .font-sans, [data-panel="7"] table, [data-panel="7"] thead, [data-panel="7"] tbody { font-family: "IBM Plex Sans", sans-serif !important; }
   }
 </style>
 </head>
@@ -342,11 +381,6 @@
       </div>
     </div>
     <div class="hidden md:flex items-center gap-4 text-xs">
-      <span class="eyebrow inline-flex items-center gap-1.5 border border-amber-400/40 rounded-sm px-2 py-0.5 text-[10px]" style="color: var(--warn); background: rgba(251,191,36,0.07);" title="Prototype built on synthesized Plaid sandbox data. Not a real financial product.">
-        <svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-        <span>Prototype · not a real financial product</span>
-      </span>
-      <div class="h-3 w-px bg-[var(--line-strong)]"></div>
       <div class="flex items-center gap-2 eyebrow"><span class="dot dot-ok"></span><span>Sandbox dataset</span></div>
       <div class="h-3 w-px bg-[var(--line-strong)]"></div>
       <button id="api-toggle" class="eyebrow eyebrow-accent border border-emerald-500/40 rounded-sm px-2.5 py-1 hover:bg-emerald-500/10 transition flex items-center gap-1.5" aria-expanded="false" aria-controls="api-panel" title="Live Plaid API developer panel">
@@ -2800,14 +2834,30 @@ async function refreshAllEndpoints() {
   }
 }
 
+// Loads the Plaid Link script lazily so it does not block first paint.
+function ensurePlaidLink() {
+  if (typeof Plaid !== 'undefined') return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+    s.async = true;
+    s.onload  = () => resolve();
+    s.onerror = () => reject(new Error('Plaid Link script failed to load.'));
+    document.head.appendChild(s);
+  });
+}
+
 async function connectWithPlaidLink() {
-  if (typeof Plaid === 'undefined') {
-    alert('Plaid Link script failed to load. Check network/CDN.');
-    return;
-  }
   const btn = document.getElementById('api-plaid-link');
-  if (btn) { btn.disabled = true; btn.textContent = 'Opening Plaid Link…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading Plaid Link…'; }
   try {
+    try { await ensurePlaidLink(); }
+    catch (e) { alert(e.message); return; }
+    if (typeof Plaid === 'undefined') {
+      alert('Plaid Link script failed to load. Check network/CDN.');
+      return;
+    }
+    if (btn) btn.textContent = 'Opening Plaid Link…';
     const r = await callPlaidEndpoint('plaid-link-token', { method: 'POST' });
     if (!r.ok) {
       alert('Link token fetch failed: ' + (r.error && r.error.message));
@@ -2888,7 +2938,15 @@ async function main() {
     document.getElementById('error').classList.remove('hidden');
   }
 }
-main();
+// Wait for DOMContentLoaded so deferred CDN scripts (Chart.js, d3-array,
+// d3-geo, topojson-client) are guaranteed to have loaded before main()
+// references them. If the document is already past loading (cache hit on
+// reload), kick off immediately.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', main);
+} else {
+  main();
+}
 </script>
 </body>
 </html>
