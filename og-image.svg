@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22385b"/>
+      <stop offset="100%" stop-color="#13203a"/>
+    </linearGradient>
+    <radialGradient id="glow-emerald" cx="15%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-cobalt" cx="90%" cy="85%" r="55%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mark-grad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="55%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="letter-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg-grad)"/>
+  <rect width="1200" height="630" fill="url(#glow-emerald)"/>
+  <rect width="1200" height="630" fill="url(#glow-cobalt)"/>
+
+  <g opacity="0.10" stroke="#5b79ac" stroke-width="0.5">
+    <line x1="0" y1="150" x2="1200" y2="150"/>
+    <line x1="0" y1="300" x2="1200" y2="300"/>
+    <line x1="0" y1="450" x2="1200" y2="450"/>
+  </g>
+
+  <!-- Bar-chart mark -->
+  <g transform="translate(80, 76)">
+    <rect x="0" y="0" width="92" height="92" rx="18" fill="#2b4670" stroke="#5b79ac" stroke-width="1.5"/>
+    <rect x="20" y="55" width="12" height="24" rx="3" fill="#f3f7ff" fill-opacity="0.30"/>
+    <rect x="40" y="40" width="12" height="39" rx="3" fill="#f3f7ff" fill-opacity="0.55"/>
+    <rect x="60" y="22" width="12" height="57" rx="3" fill="url(#mark-grad)"/>
+    <path d="M24 52 Q40 28 52 38 Q64 48 70 25" stroke="url(#mark-grad)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <circle cx="68" cy="25" r="4.5" fill="#10b981"/>
+  </g>
+
+  <g transform="translate(200, 142)" font-family="Georgia, 'Times New Roman', serif" font-weight="500">
+    <text x="0" y="0" font-size="52" fill="#f3f7ff" letter-spacing="-1.5">R<tspan fill="url(#letter-grad)">E</tspan>O</text>
+  </g>
+
+  <g transform="translate(345, 120)" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#c8d4ec" font-weight="500">
+    <text x="0" y="0" font-size="14" letter-spacing="3">RELATIONSHIP ECONOMICS OPTIMIZER</text>
+    <text x="0" y="24" font-size="12" letter-spacing="2" fill="#94a8c9">PAYMENTS-LED · TREASURY AND CREDIT EXTENDED</text>
+  </g>
+
+  <!-- Headline -->
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#f3f7ff">
+    <text x="80" y="300" font-size="68" font-weight="400" letter-spacing="-2">Commercial relationship</text>
+    <text x="80" y="376" font-size="68" font-weight="400" letter-spacing="-2">economics, end to end.</text>
+  </g>
+
+  <!-- Subtitle -->
+  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#c8d4ec">
+    <text x="80" y="448" font-size="20" font-weight="400">Merchant acquiring, treasury, and commercial credit rolled into a single banker P&amp;L view.</text>
+    <text x="80" y="476" font-size="20" font-weight="400">Built on a live Plaid API integration layered with a server-side persona mapping.</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="80" y1="520" x2="1120" y2="520" stroke="#4a6798" stroke-width="1" opacity="0.6"/>
+
+  <!-- Tech strip -->
+  <g font-family="'Courier New', monospace" font-size="14" fill="#94a8c9" letter-spacing="2.5">
+    <text x="80" y="550" font-weight="500">PLAID API · NETLIFY FUNCTIONS · RAROC · RATE-SHOCK MODEL · D3 · CHART.JS</text>
+  </g>
+
+  <!-- Footer credits -->
+  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <text x="80" y="590" font-size="13" fill="#64748b">Michael Stanat · 2026 · github.com/ms1ny-hue/merchant-revenue-optimizer</text>
+    <text x="1120" y="590" font-size="11" fill="#64748b" text-anchor="end" letter-spacing="1.5">PROTOTYPE · NOT A REAL FINANCIAL PRODUCT</text>
+  </g>
+</svg>

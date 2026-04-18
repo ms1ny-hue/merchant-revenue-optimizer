@@ -17,7 +17,7 @@ const PLAID_SECRET    = process.env.PLAID_SECRET;
 const PLAID_ENV       = process.env.PLAID_ENV || 'sandbox';
 const PLAID_WEBHOOK_URL = process.env.PLAID_WEBHOOK_URL || null;
 
-const SANDBOX_INSTITUTION_ID = 'ins_109508';   // First Platypus Bank
+const SANDBOX_INSTITUTION_ID = 'ins_109508';   // Plaid Sandbox test institution
 const INITIAL_PRODUCTS = ['auth', 'transactions', 'identity', 'liabilities'];
 
 function getPlaidClient() {
