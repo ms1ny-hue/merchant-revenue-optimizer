@@ -259,6 +259,65 @@
   }
   .copilot-chip:hover { border-color: var(--accent); background: rgba(16,185,129,0.10); }
 
+  /* Hide the floating copilot on Tab 7 (printable proposal) so it
+     doesn't overlap the letterhead at narrow viewports. Other tabs
+     keep it visible. */
+  body.tab-7-active #copilot-fab,
+  body.tab-7-active #copilot-panel {
+    display: none !important;
+  }
+
+  /* ---------- Mobile responsiveness (Tab 2 + Tab 5) ---------- */
+  /* Tab 2 scorecard: at <640px the 6-column table overflows. Stack each
+     row vertically with a labelled key/value layout via data-label, so
+     nothing clips and nothing shrinks unreadably. Desktop layout is
+     untouched. */
+  @media (max-width: 640px) {
+    table.scorecard-table thead { display: none; }
+    table.scorecard-table tbody tr {
+      display: block;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    table.scorecard-table tbody td {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 3px 0 !important;
+      border-bottom: none !important;
+      text-align: left !important;
+      white-space: normal;
+    }
+    table.scorecard-table tbody td:first-child {
+      display: block;
+      padding: 0 0 6px 0 !important;
+    }
+    table.scorecard-table tbody td[data-label]::before {
+      content: attr(data-label);
+      color: var(--text-dim);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: "IBM Plex Mono", monospace;
+      flex-shrink: 0;
+    }
+    table.scorecard-table tfoot tr {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: 14px;
+    }
+    table.scorecard-table tfoot td { padding: 0 !important; }
+
+    /* Tab 5 waterfall: shorten the chart container at mobile so x-axis
+       labels (8 bars) have more vertical room, and allow the chart
+       canvas wrapper to reduce height. Chart.js axis tick font-size
+       is also stepped down via a JS breakpoint check in buildTab5Charts. */
+    #chart-tab5-waterfall { max-height: 280px; }
+    #chart-tab5-bankrev   { max-height: 220px; }
+  }
+
   /* Developer (API) panel — light-theme surface. Semi-transparent white
      with a backdrop blur so the page gradient shows through softly
      (frosted-glass / futuristic feel, consistent with the copilot panel). */
@@ -971,6 +1030,9 @@ function renderTabs() {
 function switchTab(id) {
   document.querySelectorAll('#tabs .tab-btn').forEach((b) => b.classList.toggle('active', parseInt(b.dataset.tab, 10) === id));
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', parseInt(p.dataset.panel, 10) !== id));
+  // Toggle tab-scoped body classes. The copilot FAB is hidden on Tab 7
+  // (the printable proposal) to avoid overlapping the letterhead.
+  document.body.classList.toggle('tab-7-active', id === 7);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (id === 7) renderTab7();
   const builder = { 2: buildTab2Charts, 3: buildTab3Charts, 4: buildTab4Charts, 5: buildTab5Charts, 6: buildTab6Charts }[id];
@@ -1363,7 +1425,7 @@ function renderTab2() {
     <!-- Scorecard table -->
     <div class="border hairline rounded-lg p-6 mb-6">
       <div class="overflow-x-auto">
-        <table class="w-full text-[13px]">
+        <table class="scorecard-table w-full text-[13px]">
           <thead>
             <tr class="eyebrow text-left border-b hairline-strong">
               <th class="pb-3 pr-4 font-medium">Metric</th>
@@ -1382,11 +1444,11 @@ function renderTab2() {
                   ${r.footnote ? `<div class="mt-1 text-[10.5px] text-[var(--text-dim)] leading-snug italic max-w-2xl">${r.footnote}</div>` : ''}
                   ${r.targetBasis ? `<div class="mt-1 text-[10px] text-[var(--text-dim)] leading-snug max-w-2xl"><span class="eyebrow eyebrow-sky mr-1.5" style="font-size:9px;">Target basis</span>${r.targetBasis}</div>` : ''}
                 </td>
-                <td class="py-3 pr-4 text-right num text-[var(--warn)]">${r.current}</td>
-                <td class="py-3 pr-4 text-right num text-emerald-300" title="${r.targetBasis || ''}">${r.target}</td>
-                <td class="py-3 pr-4 text-right num text-[var(--text-mute)]">${r.gap}</td>
-                <td class="py-3 pr-4 text-right num text-slate-50 font-medium">${usd(r.annualValue)}</td>
-                <td class="py-3 text-right text-[11px] text-[var(--text-dim)] uppercase tracking-wider">${r.source || ''}</td>
+                <td data-label="Current" class="py-3 pr-4 text-right num text-[var(--warn)]">${r.current}</td>
+                <td data-label="Target" class="py-3 pr-4 text-right num text-emerald-300" title="${r.targetBasis || ''}">${r.target}</td>
+                <td data-label="Gap" class="py-3 pr-4 text-right num text-[var(--text-mute)]">${r.gap}</td>
+                <td data-label="Annual value" class="py-3 pr-4 text-right num text-slate-50 font-medium">${usd(r.annualValue)}</td>
+                <td data-label="Source" class="py-3 text-right text-[11px] text-[var(--text-dim)] uppercase tracking-wider">${r.source || ''}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -1940,6 +2002,7 @@ function renderTab5() {
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-[1.3fr,1fr] gap-6">
+        <div class="overflow-x-auto">
         <table class="w-full text-[13px]">
           <thead>
             <tr class="eyebrow text-left border-b hairline-strong">
@@ -1965,7 +2028,10 @@ function renderTab5() {
             <tr class="border-b hairline">
               <td class="py-3 pr-4 text-slate-100">Interchange share</td>
               <td class="py-3 pr-4"><span class="dot dot-ok mr-1.5"></span><span class="text-[11px] uppercase tracking-wider text-[var(--text-mute)]">Payments</span></td>
-              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]"><span class="num">${fmtBps(br.interchangeShareBps)}</span> share of interchange on <span class="num">${usd(CONFIG.payments.cardAddressableInbound)}</span> shipper card volume</td>
+              <td class="py-3 pr-4 text-[12px] text-[var(--text-mute)]">
+                <div><span class="num">${fmtBps(br.interchangeShareBps)}</span> share of interchange on <span class="num">${usd(CONFIG.payments.cardAddressableInbound)}</span> shipper card volume</div>
+                <div class="mt-1 text-[10.5px] text-[var(--text-dim)] italic leading-snug">Net of estimated 13–15 bps Visa and Mastercard network assessments, which reduce gross interchange share. Production modeling would subtract this line explicitly.</div>
+              </td>
               <td class="py-3 text-right num text-slate-50">${usd(interchangeShare)}</td>
             </tr>
             <tr class="border-b hairline">
@@ -1986,6 +2052,7 @@ function renderTab5() {
             </tr>
           </tbody>
         </table>
+        </div>
         <div class="relative">
           <div style="height: 260px"><canvas id="chart-tab5-bankrev"></canvas></div>
         </div>
@@ -2017,6 +2084,7 @@ function renderTab5() {
             <div class="eyebrow eyebrow-violet">Net economic profit after capital and ECL</div>
             <div class="text-[11px] text-[var(--text-dim)] uppercase tracking-wider">RAROC · steady state</div>
           </div>
+          <div class="overflow-x-auto">
           <table class="w-full text-[13px]">
             <thead>
               <tr class="eyebrow text-left border-b hairline-strong">
@@ -2041,6 +2109,7 @@ function renderTab5() {
               </tr>
             </tbody>
           </table>
+          </div>
           <div class="mt-3 text-[10.5px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
             FTP note: internal funds-transfer-pricing credits on deposits (~<span class="num">${usd(ftpCredit)}</span> at <span class="num">${fmtPct2.format(br.raroc.ftpDeposits)}</span> on <span class="num">${usd(deposits)}</span>) and FTP charges on loan assets (~<span class="num">${usd(ftpCharge)}</span> at <span class="num">${fmtPct2.format(br.raroc.ftpLoans)}</span> on <span class="num">${usd(br.ablOutstanding)}</span>) redistribute revenue within the bank but net to zero at the consolidated level; they are disclosed for desk-level attribution rather than consolidated P&amp;L. Illustrative.
           </div>
@@ -2052,6 +2121,7 @@ function renderTab5() {
           <div class="eyebrow eyebrow-accent">5-year relationship value build · illustrative</div>
           <div class="text-[11px] text-[var(--text-dim)] uppercase tracking-wider">Cumulative ~$1.92M</div>
         </div>
+        <div class="overflow-x-auto">
         <table class="w-full text-[12.5px]">
           <thead>
             <tr class="eyebrow text-left border-b hairline-strong">
@@ -2092,6 +2162,7 @@ function renderTab5() {
             </tr>
           </tbody>
         </table>
+        </div>
         <div class="mt-3 text-[11px] text-[var(--text-dim)] leading-relaxed max-w-4xl">
           Year 1 reflects partial-capture economics as treasury, credit, and card acceptance onboard across months 2–7. Years 3–5 assume blended volume growth of ~10% annually with fee expansion, card rebate volume scaling, and ABL utilization uplift. Illustrative multi-year trajectory, not a forecast.
         </div>
@@ -2115,8 +2186,12 @@ function buildTab5Charts() {
   const ctxW = document.getElementById('chart-tab5-waterfall');
   if (!ctxW) return;
   const c = CONFIG.capture;
-  // Construct waterfall: start at 0, each component adds up, final = total
-  const labels = ['Start'].concat(c.components.map((x) => x.label)).concat(['Total capture']);
+  // Construct waterfall: start at 0, each component adds up, final = total.
+  // On narrow viewports (<640px) long component labels get truncated so
+  // the x-axis remains readable at 8 bars; full label available in tooltip.
+  const narrow = (typeof window !== 'undefined') && window.innerWidth < 640;
+  const trimLabel = (s) => narrow && s.length > 14 ? s.slice(0, 13) + '…' : s;
+  const labels = ['Start'].concat(c.components.map((x) => trimLabel(x.label))).concat(['Total capture']);
   let running = 0;
   const invisible = [0];
   const visible = [0];
@@ -2143,9 +2218,11 @@ function buildTab5Charts() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false },
                  tooltip: { callbacks: { label: (ctx) => ctx.datasetIndex === 1 ? usd(ctx.parsed.y) : null,
+                                          title: (items) => items.length ? c.components[items[0].dataIndex - 1]?.label || items[0].label : '',
                                           filter: (item) => item.datasetIndex === 1 } } },
-      scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 35, minRotation: 0, font: { size: 10 } } },
-                y: { stacked: true, ticks: { callback: (v) => usd(v) } } },
+      scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: narrow ? 55 : 35, minRotation: 0, autoSkip: false, font: { size: narrow ? 9 : 10 } } },
+                y: { stacked: true, ticks: { callback: (v) => usd(v), font: { size: narrow ? 9 : 11 } } } },
+      layout: { padding: { bottom: narrow ? 4 : 0 } },
     },
   });
   STATE.charts.tab5waterfall.resize();
