@@ -1,0 +1,7 @@
+/* Tailwind source for the precompiled bundle. All custom CSS still
+   lives inside the <style> block in index.html; this file only emits
+   the Tailwind base / components / utilities layers that the JIT CDN
+   used to inject at runtime. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -1,6 +1,7 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  command = "npm run build"
 
 [dev]
   command = "python3 -m http.server 8765"
@@ -31,3 +32,12 @@
   for = "/fixtures/*"
   [headers.values]
     Cache-Control = "public, max-age=86400, must-revalidate"
+
+# Long-cache the generated Tailwind + Chart.js bundles. File names are
+# content-less so when they change we rely on the HTML revalidating to
+# pick up new <script>/<link> references; if we ever introduce hashed
+# filenames, bump this to immutable without must-revalidate.
+[[headers]]
+  for = "/dist/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, must-revalidate"

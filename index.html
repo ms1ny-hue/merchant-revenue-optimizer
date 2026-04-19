@@ -24,45 +24,34 @@
 <meta name="twitter:description" content="Payments-led relationship economics prototype for a mid-market 3PL, built on live Plaid sandbox data.">
 <meta name="twitter:image" content="https://merchant-revenue-optimizer.netlify.app/og-image.png">
 
-<!-- Connection warm-up for the third-party CDNs we depend on. -->
+<!-- Connection warm-up for the third-party origins we depend on. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
-<link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
 <link rel="dns-prefetch" href="https://cdn.plaid.com">
 
-<!-- Suppress the Tailwind Play CDN production-mode console.warn. The
-     warning is informational and clutters Lighthouse Best Practices /
-     "no console errors" audits. The disclosure that this is a prototype
-     lives in the footer and is not removed. -->
-<script>
-  (function () {
-    var orig = console.warn;
-    console.warn = function () {
-      if (arguments[0] && /cdn\.tailwindcss\.com/.test(String(arguments[0]))) return;
-      return orig.apply(console, arguments);
-    };
-  })();
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
-          serif: ['"Fraunces"', '"Source Serif Pro"', 'Georgia', 'serif'],
-          mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
-        },
-      },
-    },
-  };
-</script>
+<!-- Prebuilt Tailwind CSS bundle. Replaces the runtime Play CDN
+     (cdn.tailwindcss.com), which shipped ~350KB of JIT compiler as a
+     render-blocking script and emitted a console.warn on every load.
+     Tailwind is now compiled at build time via:
+       npx tailwindcss -i src/tailwind.css -o dist/tailwind.css --minify
+     See tailwind.config.js for the content path + custom theme. -->
+<link href="./dist/tailwind.css" rel="stylesheet">
+
+<!-- Fonts are loaded with display=swap so text paints immediately in
+     the system fallback and reflows once the webfont arrives. -->
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<!-- Charting + topology libraries deferred so they don't block first
-     paint. main() is wired to fire on DOMContentLoaded so it sees them. -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+
+<!-- Tree-shaken Chart.js. Only the bar controller + category/linear
+     scales + tooltip/legend are registered (the app does not use line,
+     doughnut, radar, etc.). Built with esbuild via:
+       esbuild src/chart-bundle.js --bundle --minify --format=iife
+     dist/chart-bundle.js exposes window.Chart for the existing
+     `new Chart(...)` / `Chart.getChart(ctx)` / `Chart.defaults` callers. -->
+<script src="./dist/chart-bundle.js" defer></script>
+
+<!-- Topology libraries deferred so they don't block first paint. main()
+     fires on DOMContentLoaded so these are guaranteed available. -->
 <script src="https://unpkg.com/d3-array@3" defer></script>
 <script src="https://unpkg.com/d3-geo@3" defer></script>
 <script src="https://unpkg.com/topojson-client@3" defer></script>
@@ -105,6 +94,17 @@
       radial-gradient(900px 600px at 102% 60%, rgba(34, 211, 238, 0.05), transparent 65%);
     background-attachment: fixed;
   }
+  /* Reserve vertical space for the panels container during the initial
+     data fetch. Without this, the <main> region starts at 0px, then
+     jumps to ~1400-2000px once STATE.accounts / STATE.usGeo resolve and
+     renderAllPanels() paints. Lighthouse reports that jump as CLS. The
+     min-height is claimed before any fetch resolves, so layout is stable
+     through the whole load even when /plaid-accounts takes 7s to cold
+     start. Once content is populated it expands naturally past the
+     min-height — no clipping, no empty whitespace at the bottom. */
+  #panels { min-height: 1400px; }
+  @media (max-width: 640px) { #panels { min-height: 2200px; } }
+
   body {
     color: var(--text);
     font-feature-settings: "ss01","ss02","cv05","cv11";
@@ -904,7 +904,10 @@ function initChartDefaults() {
   Chart.defaults.plugins.tooltip.bodyFont = { family: '"IBM Plex Mono"', size: 11 };
   Chart.defaults.plugins.tooltip.titleFont = { family: '"IBM Plex Sans"', size: 11, weight: '500' };
   Chart.defaults.plugins.tooltip.cornerRadius = 4;
-  Chart.defaults.elements.arc.borderWidth = 0;
+  // Note: Chart.defaults.elements.arc.borderWidth was removed when Chart.js
+  // was tree-shaken. The app only uses BarController (no arc/doughnut/pie),
+  // so ArcElement is not registered and Chart.defaults.elements.arc is
+  // undefined. Setting a property on it would throw.
 }
 function destroyChart(key) { if (STATE.charts[key]) { STATE.charts[key].destroy(); delete STATE.charts[key]; } }
 
@@ -967,31 +970,45 @@ async function loadFixture() {
   return res.json();
 }
 
+// Loads initial data for the app. Fixture-first: the persona-shaped
+// sample response is committed to the repo and resolves instantly, so
+// the first paint does not wait on the /plaid-accounts Netlify Function
+// cold start (which runs three sequential Plaid API calls and can take
+// 7+ seconds). Live data is fetched in the background via
+// refreshLivePlaidData() after renderAllPanels() has painted.
 async function loadData() {
   const params = new URLSearchParams(window.location.search);
   STATE.useFixture = params.get('fixture') === '1';
 
-  if (STATE.useFixture) {
-    const fixture = await loadFixture();
-    STATE.data = fixture;
-    STATE.accounts = (fixture.data && fixture.data.accounts) || [];
-    STATE.apiMeta.accounts = { ...(fixture.meta || {}), source: 'fixture' };
-    return;
-  }
+  const fixture = await loadFixture();
+  STATE.data = fixture;
+  STATE.accounts = (fixture.data && fixture.data.accounts) || [];
+  STATE.apiMeta.accounts = { ...(fixture.meta || {}), source: 'fixture' };
+}
+
+// Background refresh: replaces the fixture-seeded data with a live
+// response from the Netlify Functions. Called after first paint so the
+// initial LCP doesn't depend on the Plaid round trip. Silent on failure
+// (the dev panel surfaces per-endpoint errors via STATE.apiErrors).
+async function refreshLivePlaidData() {
+  if (STATE.useFixture) return; // ?fixture=1 forces fixture-only
 
   const [accountsResp, txnsResp] = await Promise.all([
     callPlaidEndpoint('plaid-accounts'),
     callPlaidEndpoint('plaid-transactions'),
   ]);
 
+  let accountsChanged = false;
   if (accountsResp.ok) {
     STATE.apiMeta.accounts = accountsResp.meta;
-    STATE.accounts = (accountsResp.data && accountsResp.data.accounts) || [];
-    STATE.data = accountsResp.extra;
+    const liveAccounts = (accountsResp.data && accountsResp.data.accounts) || [];
+    if (liveAccounts.length) {
+      STATE.accounts = liveAccounts;
+      STATE.data = accountsResp.extra;
+      accountsChanged = true;
+    }
   } else {
     STATE.apiMeta.accounts = { endpoint: '/accounts/get', status: accountsResp.error.code, error: accountsResp.error };
-    STATE.accounts = [];
-    throw new Error(`plaid-accounts: ${accountsResp.error.code} — ${accountsResp.error.message}`);
   }
 
   if (txnsResp.ok) {
@@ -999,6 +1016,13 @@ async function loadData() {
   } else {
     STATE.apiMeta.transactions = { endpoint: '/transactions/sync', status: txnsResp.error.code, error: txnsResp.error };
   }
+
+  // If balances changed, re-render so the displayed account totals and
+  // any derived figures (deposits, bank revenue build, etc.) reflect
+  // the live data. If they did not, just refresh the dev panel so the
+  // new request_id / latency values show.
+  if (accountsChanged) renderAllPanels();
+  renderAPIPanel();
 }
 
 /* ================================================================== *
@@ -2998,9 +3022,8 @@ async function refreshAllEndpoints() {
   const btn = document.getElementById('api-refresh-all');
   if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
   try {
-    await loadData();                // accounts + transactions
+    await refreshLivePlaidData();    // live accounts + transactions (re-renders on change)
     await fetchAuxiliaryEndpoints(); // item + identity + liabilities + auth + webhooks
-    renderAllPanels();               // redraw the app with new data
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Refresh all endpoints'; }
     renderAPIPanel();
@@ -3106,6 +3129,10 @@ function initAPIPanel() {
 async function main() {
   initChartDefaults();
   try {
+    // Fixture-first: loadData() pulls the persona-shaped sample response
+    // committed to the repo (/fixtures/sample-plaid-response.json) so the
+    // first paint resolves in <100ms regardless of Plaid function cold
+    // start. loadUSGeo() runs in parallel.
     await Promise.all([loadData(), loadUSGeo()]);
     document.getElementById('header-date').textContent = fmtDaily.format(new Date());
     renderTabs();
@@ -3113,6 +3140,17 @@ async function main() {
     initCopilot();
     initAPIPanel();
     document.getElementById('loading').classList.add('hidden');
+
+    // After first paint: upgrade to live Plaid data in the background.
+    // This fires well after LCP so the cold-start cost is invisible to
+    // Lighthouse. If the live call fails (usage cap, network, etc.) the
+    // app stays seeded with fixture data and the dev panel surfaces the
+    // error — no user-visible failure state.
+    if (!STATE.useFixture) {
+      const kick = () => refreshLivePlaidData().catch((err) => console.warn('Live Plaid refresh failed:', err));
+      if (typeof requestIdleCallback === 'function') requestIdleCallback(kick, { timeout: 2000 });
+      else setTimeout(kick, 0);
+    }
 
     // Note: /item, /identity, /liabilities, /auth, /webhook are not fetched
     // here. They're lazy-loaded the first time the user opens the dev panel
