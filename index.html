@@ -30,6 +30,17 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.plaid.com">
 
+<!-- Preload the two largest webfont files used by the LCP candidate.
+     Without preload these woff2 requests can't begin until after the
+     googleapis.com CSS is fetched + parsed (a ~2-RTT waterfall that was
+     holding LCP at 3.8s — font swap from fallback to Fraunces was
+     bumping the LCP element). Preloading runs those fetches in parallel
+     with the CSS so Fraunces is ready by the time the display heading
+     is ready to paint. URLs are v-pinned (v38 / v23) and cache-stable:
+     Google never mutates a versioned URL, only publishes new ones. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeP2Xz5c.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYbSB4Zh.woff2">
+
 <!-- Prebuilt Tailwind CSS bundle. Replaces the runtime Play CDN
      (cdn.tailwindcss.com), which shipped ~350KB of JIT compiler as a
      render-blocking script and emitted a console.warn on every load.
@@ -40,7 +51,10 @@
 
 <!-- Fonts are loaded with display=swap so text paints immediately in
      the system fallback and reflows once the webfont arrives. -->
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Fraunces weight 300 dropped — unused anywhere in the app (only 400,
+     500, 600 are referenced). Saves one unused woff2 fetch off the
+     critical path. -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <!-- Tree-shaken Chart.js. Only the bar controller + category/linear
      scales + tooltip/legend are registered (the app does not use line,
